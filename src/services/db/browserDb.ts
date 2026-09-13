@@ -176,8 +176,13 @@ function generateSimulatedApplications(baseApps: Application[]): Application[] {
   return pool;
 }
 
+let isDbInitialized = false;
+
 export const browserDb = {
   init(): void {
+    if (isDbInitialized) return;
+    isDbInitialized = true;
+
     if (!localStorage.getItem(TABLES.USERS)) {
       localStorage.setItem(TABLES.USERS, JSON.stringify(INITIAL_APPLICANTS));
     }
@@ -199,11 +204,16 @@ export const browserDb = {
     }
 
     // Always ensure Aarav Kumar's photo is the authentic local portrait
-    const currentUser = this.getCurrentUser();
-    if (currentUser && currentUser.id === 'app-001' && (!currentUser.avatar || currentUser.avatar.includes('photo-1539571696357'))) {
-      currentUser.avatar = '/aarav.jpg';
-      this.setCurrentUser(currentUser);
-    }
+    try {
+      const userRaw = localStorage.getItem(TABLES.CURRENT_USER);
+      if (userRaw) {
+        const u = JSON.parse(userRaw);
+        if (u && u.id === 'app-001' && (!u.avatar || u.avatar.includes('photo-1539571696357'))) {
+          u.avatar = '/aarav.jpg';
+          localStorage.setItem(TABLES.CURRENT_USER, JSON.stringify(u));
+        }
+      }
+    } catch {}
   },
 
   // 1. Applications Table
