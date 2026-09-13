@@ -38,12 +38,15 @@ import { AnalyticsPage } from './pages/admin/Analytics';
 import { CommunicationsPage } from './pages/admin/Communications';
 import { AdminAuditTrail } from './pages/admin/AuditTrail';
 
+import { RequestActivityIndicator } from './components/common/RequestActivityIndicator';
+
 export function App() {
   return (
     <ToastProvider>
       <AuthProvider>
         <ApplicationProvider>
           <BrowserRouter>
+            <RequestActivityIndicator />
             <Routes>
               {/* Public Routes */}
               <Route element={<PublicLayout />}>

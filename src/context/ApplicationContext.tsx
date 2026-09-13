@@ -1,7 +1,16 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  ReactNode,
+  useEffect,
+} from 'react';
 import { Application, ApplicationStatus, NotificationItem, SchemeConfigurationWeights } from '../types';
-import { storageService } from '../services/storageService';
-import { mockApplicationService } from '../services/mockApplicationService';
+import { browserDb } from '../services/db/browserDb';
+import { applicationService, ApplicationQueryParams, PaginatedResponse } from '../services/api/applicationService';
+import { eventBus } from '../services/events/eventBus';
+import { apiConfig } from '../services/api/apiConfig';
 import { useToast } from './ToastContext';
 import confetti from 'canvas-confetti';
 
@@ -9,100 +18,171 @@ interface ApplicationContextType {
   applications: Application[];
   notifications: NotificationItem[];
   schemeWeights: SchemeConfigurationWeights;
-  refreshApplications: () => void;
+  isLoading: boolean;
+  isSyncing: boolean;
+  error: string | null;
+  refreshApplications: () => Promise<void>;
+  fetchApplicationsPaged: (params?: ApplicationQueryParams) => Promise<PaginatedResponse<Application>>;
   getApplication: (id: string) => Application | undefined;
-  createApplication: (app: Application) => Application;
+  createApplication: (app: Application) => Promise<Application>;
   updateApplication: (app: Application) => void;
-  updateStatus: (id: string, status: ApplicationStatus, remarks?: string) => Application | null;
+  updateStatus: (id: string, status: ApplicationStatus, remarks?: string) => Promise<Application | null>;
   resolveDeficiency: (
     applicationId: string,
     documentType: string,
     fileUrl: string,
     fileName: string,
     fileSize: string
-  ) => Application | null;
+  ) => Promise<Application | null>;
   markNotificationRead: (id: string) => void;
   updateSchemeWeights: (weights: SchemeConfigurationWeights) => void;
   resetAllDemoData: () => void;
   launchHackathonDemoScenario: () => void;
+  clearError: () => void;
 }
 
 const ApplicationContext = createContext<ApplicationContextType | undefined>(undefined);
 
 export const ApplicationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [applications, setApplications] = useState<Application[]>(() => storageService.getApplications());
-  const [notifications, setNotifications] = useState<NotificationItem[]>(() => storageService.getNotifications());
-  const [schemeWeights, setSchemeWeights] = useState<SchemeConfigurationWeights>(() => storageService.getSchemeWeights());
-  const { success, info } = useToast();
+  const [applications, setApplications] = useState<Application[]>(() => browserDb.getApplications());
+  const [notifications, setNotifications] = useState<NotificationItem[]>(() => browserDb.getNotifications());
+  const [schemeWeights, setSchemeWeights] = useState<SchemeConfigurationWeights>(() => browserDb.getSchemeWeights());
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const refreshApplications = useCallback(() => {
-    setApplications(storageService.getApplications());
-    setNotifications(storageService.getNotifications());
-    setSchemeWeights(storageService.getSchemeWeights());
-  }, []);
+  const { success, info, error: toastError } = useToast();
+
+  const refreshApplications = useCallback(async () => {
+    setIsSyncing(true);
+    setError(null);
+    try {
+      await apiConfig.simulateLatency('singleApplication', 'Syncing Ministry data cache...');
+      setApplications(browserDb.getApplications());
+      setNotifications(browserDb.getNotifications());
+      setSchemeWeights(browserDb.getSchemeWeights());
+    } catch (err: any) {
+      const msg = err?.message || 'Failed to synchronize with Ministry Gateway';
+      setError(msg);
+      toastError('Sync Error', msg);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [toastError]);
+
+  // Server-side paginated fetcher for enterprise tables
+  const fetchApplicationsPaged = useCallback(
+    async (params: ApplicationQueryParams = {}): Promise<PaginatedResponse<Application>> => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const result = await applicationService.getApplications(params);
+        return result;
+      } catch (err: any) {
+        const msg = err?.message || 'Failed to retrieve application records';
+        setError(msg);
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
 
   const getApplication = useCallback((id: string) => {
-    return storageService.getApplicationById(id);
+    return browserDb.findApplicationById(id);
   }, []);
 
   const createApplication = useCallback(
-    (app: Application) => {
-      const created = mockApplicationService.createApplication(app);
-      refreshApplications();
-      return created;
+    async (app: Application) => {
+      setIsSyncing(true);
+      try {
+        const created = await applicationService.submitApplication(app);
+        setApplications(browserDb.getApplications());
+        setNotifications(browserDb.getNotifications());
+        success('Application Submitted', `Application ${created.id} received by Ministry Gateway.`);
+        return created;
+      } finally {
+        setIsSyncing(false);
+      }
     },
-    [refreshApplications]
+    [success]
   );
 
-  const updateApplication = useCallback(
-    (app: Application) => {
-      storageService.updateApplication(app);
-      refreshApplications();
-    },
-    [refreshApplications]
-  );
+  const updateApplication = useCallback((app: Application) => {
+    browserDb.upsertApplication(app);
+    setApplications(browserDb.getApplications());
+  }, []);
 
   const updateStatus = useCallback(
-    (id: string, status: ApplicationStatus, remarks?: string) => {
-      const updated = mockApplicationService.updateStatus(id, status, 'Dr. Rajesh Soren (Deputy Secretary)', remarks);
-      if (updated) {
-        refreshApplications();
-        if (status === 'Shortlisted' || status === 'Selected' || status === 'Approved') {
-          confetti({
-            particleCount: 80,
-            spread: 70,
-            origin: { y: 0.6 },
-            colors: ['#0D3829', '#D97706', '#10B981', '#F59E0B'],
-          });
+    async (id: string, status: ApplicationStatus, remarks?: string) => {
+      setIsSyncing(true);
+      try {
+        const updated = await applicationService.updateStatus(
+          id,
+          status,
+          'Dr. Rajesh Soren (Deputy Secretary, MOTA)',
+          remarks
+        );
+        if (updated) {
+          setApplications(browserDb.getApplications());
+          setNotifications(browserDb.getNotifications());
+
+          if (status === 'Shortlisted' || status === 'Selected' || status === 'Approved') {
+            confetti({
+              particleCount: 90,
+              spread: 75,
+              origin: { y: 0.6 },
+              colors: ['#0D3829', '#D97706', '#10B981', '#F59E0B'],
+            });
+          }
         }
+        return updated;
+      } finally {
+        setIsSyncing(false);
       }
-      return updated;
     },
-    [refreshApplications]
+    []
   );
 
   const resolveDeficiency = useCallback(
-    (applicationId: string, documentType: string, fileUrl: string, fileName: string, fileSize: string) => {
-      const updated = mockApplicationService.resolveDeficiency(applicationId, documentType, fileUrl, fileName, fileSize);
-      if (updated) {
-        refreshApplications();
+    async (
+      applicationId: string,
+      documentType: string,
+      fileUrl: string,
+      fileName: string,
+      fileSize: string
+    ) => {
+      setIsSyncing(true);
+      try {
+        const updated = await applicationService.resolveDeficiency(
+          applicationId,
+          documentType,
+          fileUrl,
+          fileName,
+          fileSize
+        );
+        if (updated) {
+          setApplications(browserDb.getApplications());
+          setNotifications(browserDb.getNotifications());
+          success('Deficiency Resolved', 'Document re-verified by AI engine and moved to Scrutiny queue.');
+        }
+        return updated;
+      } finally {
+        setIsSyncing(false);
       }
-      return updated;
     },
-    [refreshApplications]
+    [success]
   );
 
-  const markNotificationRead = useCallback(
-    (id: string) => {
-      storageService.markNotificationAsRead(id);
-      refreshApplications();
-    },
-    [refreshApplications]
-  );
+  const markNotificationRead = useCallback((id: string) => {
+    browserDb.markNotificationAsRead(id);
+    setNotifications(browserDb.getNotifications());
+  }, []);
 
   const updateSchemeWeights = useCallback(
     (weights: SchemeConfigurationWeights) => {
-      storageService.saveSchemeWeights(weights);
+      browserDb.saveSchemeWeights(weights);
       setSchemeWeights(weights);
       success('Scheme Configuration Updated', 'Merit ranking weights updated across the screening engine.');
     },
@@ -110,16 +190,48 @@ export const ApplicationProvider: React.FC<{ children: ReactNode }> = ({ childre
   );
 
   const resetAllDemoData = useCallback(() => {
-    storageService.resetDemoData();
-    refreshApplications();
+    browserDb.resetDatabase();
+    setApplications(browserDb.getApplications());
+    setNotifications(browserDb.getNotifications());
+    setSchemeWeights(browserDb.getSchemeWeights());
+    setError(null);
     info('Demo State Reset', 'Initial sample applicants and applications restored.');
-  }, [refreshApplications, info]);
+  }, [info]);
 
   const launchHackathonDemoScenario = useCallback(() => {
-    storageService.resetDemoData();
-    refreshApplications();
+    browserDb.resetDatabase();
+    setApplications(browserDb.getApplications());
+    setNotifications(browserDb.getNotifications());
+    setSchemeWeights(browserDb.getSchemeWeights());
+    setError(null);
     success('Hackathon Demo Scenario Initialized', 'Aarav Kumar (NFST) preset in Deficient state ready for walkthrough.');
-  }, [refreshApplications, success]);
+  }, [success]);
+
+  const clearError = useCallback(() => {
+    apiConfig.clearSimulatedError();
+    setError(null);
+  }, []);
+
+  // Listen to simulated WebSockets real-time event bus
+  useEffect(() => {
+    const unsub1 = eventBus.subscribe('application:status_changed', () => {
+      setApplications(browserDb.getApplications());
+      setNotifications(browserDb.getNotifications());
+    });
+    const unsub2 = eventBus.subscribe('application:deficiency_resolved', () => {
+      setApplications(browserDb.getApplications());
+      setNotifications(browserDb.getNotifications());
+    });
+    const unsub3 = eventBus.subscribe('notification:created', () => {
+      setNotifications(browserDb.getNotifications());
+    });
+
+    return () => {
+      unsub1();
+      unsub2();
+      unsub3();
+    };
+  }, []);
 
   return (
     <ApplicationContext.Provider
@@ -127,7 +239,11 @@ export const ApplicationProvider: React.FC<{ children: ReactNode }> = ({ childre
         applications,
         notifications,
         schemeWeights,
+        isLoading,
+        isSyncing,
+        error,
         refreshApplications,
+        fetchApplicationsPaged,
         getApplication,
         createApplication,
         updateApplication,
@@ -137,6 +253,7 @@ export const ApplicationProvider: React.FC<{ children: ReactNode }> = ({ childre
         updateSchemeWeights,
         resetAllDemoData,
         launchHackathonDemoScenario,
+        clearError,
       }}
     >
       {children}

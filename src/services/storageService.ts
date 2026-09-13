@@ -1,182 +1,75 @@
 import { Application, CommunicationNotice, NotificationItem, SchemeConfigurationWeights, User } from '../types';
-import { INITIAL_APPLICANTS, DEMO_OFFICER } from '../data/initialApplicants';
-import { INITIAL_APPLICATIONS } from '../data/initialApplications';
-import { INITIAL_NOTIFICATIONS } from '../data/initialNotifications';
-
-const KEYS = {
-  CURRENT_USER: 'adivasetu_user',
-  APPLICATIONS: 'adivasetu_applications',
-  NOTIFICATIONS: 'adivasetu_notifications',
-  COMMUNICATIONS: 'adivasetu_communications',
-  SCHEME_WEIGHTS: 'adivasetu_scheme_weights',
-  DEMO_SCENARIO: 'adivasetu_demo_scenario',
-};
-
-const DEFAULT_WEIGHTS: SchemeConfigurationWeights = {
-  academicPerformance: 30,
-  researchProposal: 25,
-  eligibilityCompliance: 20,
-  institutionRating: 15,
-  documentCompleteness: 10,
-};
+import { browserDb } from './db/browserDb';
 
 export const storageService = {
   // User Authentication
   getCurrentUser(): User | null {
-    const raw = localStorage.getItem(KEYS.CURRENT_USER);
-    if (!raw) {
-      // Default to Aarav Kumar for initial applicant demo experience
-      return INITIAL_APPLICANTS[0];
-    }
-    try {
-      const u = JSON.parse(raw);
-      if (u && u.id === 'app-001' && (!u.avatar || u.avatar.includes('photo-1539571696357'))) {
-        u.avatar = '/aarav.jpg';
-        localStorage.setItem(KEYS.CURRENT_USER, JSON.stringify(u));
-      }
-      return u;
-    } catch {
-      return INITIAL_APPLICANTS[0];
-    }
+    return browserDb.getCurrentUser();
   },
 
   setCurrentUser(user: User | null): void {
-    if (user) {
-      localStorage.setItem(KEYS.CURRENT_USER, JSON.stringify(user));
-    } else {
-      localStorage.removeItem(KEYS.CURRENT_USER);
-    }
+    browserDb.setCurrentUser(user);
   },
 
   // Applications
   getApplications(): Application[] {
-    const raw = localStorage.getItem(KEYS.APPLICATIONS);
-    if (!raw) {
-      localStorage.setItem(KEYS.APPLICATIONS, JSON.stringify(INITIAL_APPLICATIONS));
-      return INITIAL_APPLICATIONS;
-    }
-    try {
-      const parsed: Application[] = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        parsed.forEach((app) => {
-          if (app.applicantId === 'app-001' && (!app.applicantPhoto || app.applicantPhoto.includes('photo-1539571696357'))) {
-            app.applicantPhoto = '/aarav.jpg';
-          }
-        });
-        return parsed;
-      }
-      return INITIAL_APPLICATIONS;
-    } catch {
-      return INITIAL_APPLICATIONS;
-    }
+    return browserDb.getApplications();
   },
 
   saveApplications(apps: Application[]): void {
-    localStorage.setItem(KEYS.APPLICATIONS, JSON.stringify(apps));
+    browserDb.saveApplications(apps);
   },
 
   getApplicationById(id: string): Application | undefined {
-    const apps = this.getApplications();
-    return apps.find((a) => a.id === id);
+    return browserDb.findApplicationById(id);
   },
 
   updateApplication(updated: Application): void {
-    const apps = this.getApplications();
-    const idx = apps.findIndex((a) => a.id === updated.id);
-    if (idx !== -1) {
-      apps[idx] = updated;
-    } else {
-      apps.unshift(updated);
-    }
-    this.saveApplications(apps);
+    browserDb.upsertApplication(updated);
   },
 
   // Notifications
   getNotifications(): NotificationItem[] {
-    const raw = localStorage.getItem(KEYS.NOTIFICATIONS);
-    if (!raw) {
-      localStorage.setItem(KEYS.NOTIFICATIONS, JSON.stringify(INITIAL_NOTIFICATIONS));
-      return INITIAL_NOTIFICATIONS;
-    }
-    try {
-      return JSON.parse(raw);
-    } catch {
-      return INITIAL_NOTIFICATIONS;
-    }
+    return browserDb.getNotifications();
   },
 
   saveNotifications(notifs: NotificationItem[]): void {
-    localStorage.setItem(KEYS.NOTIFICATIONS, JSON.stringify(notifs));
+    browserDb.saveNotifications(notifs);
   },
 
   addNotification(notif: Omit<NotificationItem, 'id' | 'timestamp' | 'read'>): NotificationItem {
-    const list = this.getNotifications();
-    const item: NotificationItem = {
-      ...notif,
-      id: 'notif-' + Date.now(),
-      timestamp: new Date().toISOString(),
-      read: false,
-    };
-    list.unshift(item);
-    this.saveNotifications(list);
-    return item;
+    return browserDb.addNotification(notif);
   },
 
   markNotificationAsRead(id: string): void {
-    const list = this.getNotifications();
-    const updated = list.map((n) => (n.id === id ? { ...n, read: true } : n));
-    this.saveNotifications(updated);
+    browserDb.markNotificationAsRead(id);
   },
 
   // Scheme Weights
   getSchemeWeights(): SchemeConfigurationWeights {
-    const raw = localStorage.getItem(KEYS.SCHEME_WEIGHTS);
-    if (!raw) return DEFAULT_WEIGHTS;
-    try {
-      return JSON.parse(raw);
-    } catch {
-      return DEFAULT_WEIGHTS;
-    }
+    return browserDb.getSchemeWeights();
   },
 
   saveSchemeWeights(weights: SchemeConfigurationWeights): void {
-    localStorage.setItem(KEYS.SCHEME_WEIGHTS, JSON.stringify(weights));
+    browserDb.saveSchemeWeights(weights);
   },
 
   // Communications
   getCommunications(): CommunicationNotice[] {
-    const raw = localStorage.getItem(KEYS.COMMUNICATIONS);
-    if (!raw) return [];
-    try {
-      return JSON.parse(raw);
-    } catch {
-      return [];
-    }
+    return browserDb.getCommunications();
   },
 
   saveCommunications(comms: CommunicationNotice[]): void {
-    localStorage.setItem(KEYS.COMMUNICATIONS, JSON.stringify(comms));
+    localStorage.setItem('adivasetu_db_communications', JSON.stringify(comms));
+    browserDb.touchSync();
   },
 
   addCommunication(comm: Omit<CommunicationNotice, 'id' | 'sentAt' | 'status'>): CommunicationNotice {
-    const list = this.getCommunications();
-    const item: CommunicationNotice = {
-      ...comm,
-      id: 'comm-' + Date.now(),
-      sentAt: new Date().toISOString(),
-      status: 'delivered',
-    };
-    list.unshift(item);
-    this.saveCommunications(list);
-    return item;
+    return browserDb.addCommunication(comm);
   },
 
   // Full Demo State Reset
   resetDemoData(): void {
-    localStorage.setItem(KEYS.CURRENT_USER, JSON.stringify(INITIAL_APPLICANTS[0]));
-    localStorage.setItem(KEYS.APPLICATIONS, JSON.stringify(INITIAL_APPLICATIONS));
-    localStorage.setItem(KEYS.NOTIFICATIONS, JSON.stringify(INITIAL_NOTIFICATIONS));
-    localStorage.setItem(KEYS.SCHEME_WEIGHTS, JSON.stringify(DEFAULT_WEIGHTS));
-    localStorage.removeItem(KEYS.COMMUNICATIONS);
+    browserDb.resetDatabase();
   },
 };

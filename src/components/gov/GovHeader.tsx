@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AshokaEmblem } from './AshokaEmblem';
+import { SyncIndicator } from './SyncIndicator';
 import { useAuth } from '../../context/AuthContext';
 import { LogIn, LogOut, User as UserIcon, Shield, Sparkles, Video } from 'lucide-react';
 
@@ -41,6 +42,11 @@ export const GovHeader: React.FC<GovHeaderProps> = ({ onOpenRecorder, onOpenDemo
 
           {/* Right Action Controls */}
           <div className="flex items-center space-x-2 sm:space-x-3">
+            {/* Live Gateway Sync Indicator */}
+            <div className="hidden lg:block">
+              <SyncIndicator showLiveStream={isAuthenticated} />
+            </div>
+
             {/* Built-in Screen Recorder Button */}
             {onOpenRecorder && (
               <button
@@ -58,7 +64,7 @@ export const GovHeader: React.FC<GovHeaderProps> = ({ onOpenRecorder, onOpenDemo
             {onOpenDemoControls && (
               <button
                 onClick={onOpenDemoControls}
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100 transition-all shadow-2xs"
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100 transition-all shadow-2xs cursor-pointer"
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-600" />
                 <span>Demo Tour</span>

@@ -84,9 +84,14 @@ export interface DeficiencyItem {
   reason: string;
   severity: 'low' | 'medium' | 'high';
   recommendedAction: string;
-  status: 'open' | 'resolved';
+  status: 'open' | 'resolved' | 'pending';
   createdAt: string;
   resolvedAt?: string;
+  flagReason?: string;
+  flaggedAt?: string;
+  flaggedBy?: string;
+  replacementDocUrl?: string;
+  replacementDocName?: string;
 }
 
 export interface AuditEvent {
@@ -173,6 +178,10 @@ export interface Application {
   currentStepIndex: number;
   eligibilityStatus: 'Eligible' | 'Conditional' | 'Ineligible';
   aiScore: number;
+  academicYear?: string;
+  aiConfidence?: number;
+  documentsCount?: number;
+  verifiedDocumentsCount?: number;
   formData: ApplicationFormData;
   documents: DocumentItem[];
   deficiencies: DeficiencyItem[];

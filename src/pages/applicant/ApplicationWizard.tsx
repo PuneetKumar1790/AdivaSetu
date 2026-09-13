@@ -214,7 +214,7 @@ export const ApplicationWizard: React.FC = () => {
     success('Draft Saved', 'Your application particulars have been safely persisted locally.');
   };
 
-  const handleFinalSubmit = () => {
+  const handleFinalSubmit = async () => {
     if (!declarationChecked) {
       warning('Declaration Required', 'Please confirm the statutory e-sign declaration before submitting.');
       return;
@@ -288,7 +288,7 @@ export const ApplicationWizard: React.FC = () => {
       ],
     };
 
-    createApplication(newApplication);
+    await createApplication(newApplication);
 
     // Trigger celebration
     confetti({
