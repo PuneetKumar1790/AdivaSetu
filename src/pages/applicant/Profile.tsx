@@ -24,7 +24,7 @@ export const ScholarProfile: React.FC = () => {
         <div className="lg:col-span-4 bg-white rounded-3xl border border-slate-200 p-6 shadow-xs text-center space-y-4">
           <div className="relative w-28 h-28 mx-auto">
             <img
-              src={user?.avatar || 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200'}
+              src={user?.avatar || '/aarav.jpg'}
               alt={user?.name}
               className="w-full h-full rounded-full border-4 border-[#0D3829] object-cover shadow-md"
             />

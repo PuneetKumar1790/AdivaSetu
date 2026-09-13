@@ -5,7 +5,7 @@ export const INITIAL_APPLICATIONS: Application[] = [
     id: 'ADVS-NFST-2026-00482',
     applicantId: 'app-001',
     applicantName: 'Aarav Kumar',
-    applicantPhoto: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80',
+    applicantPhoto: '/aarav.jpg',
     schemeId: 'nfst-01',
     schemeCode: 'NFST',
     schemeName: 'National Fellowship for Scheduled Tribes',

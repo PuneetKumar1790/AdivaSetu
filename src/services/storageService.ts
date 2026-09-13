@@ -29,7 +29,12 @@ export const storageService = {
       return INITIAL_APPLICANTS[0];
     }
     try {
-      return JSON.parse(raw);
+      const u = JSON.parse(raw);
+      if (u && u.id === 'app-001' && (!u.avatar || u.avatar.includes('photo-1539571696357'))) {
+        u.avatar = '/aarav.jpg';
+        localStorage.setItem(KEYS.CURRENT_USER, JSON.stringify(u));
+      }
+      return u;
     } catch {
       return INITIAL_APPLICANTS[0];
     }
@@ -51,8 +56,16 @@ export const storageService = {
       return INITIAL_APPLICATIONS;
     }
     try {
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_APPLICATIONS;
+      const parsed: Application[] = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        parsed.forEach((app) => {
+          if (app.applicantId === 'app-001' && (!app.applicantPhoto || app.applicantPhoto.includes('photo-1539571696357'))) {
+            app.applicantPhoto = '/aarav.jpg';
+          }
+        });
+        return parsed;
+      }
+      return INITIAL_APPLICATIONS;
     } catch {
       return INITIAL_APPLICATIONS;
     }

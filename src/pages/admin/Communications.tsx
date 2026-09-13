@@ -189,7 +189,7 @@ export const CommunicationsPage: React.FC = () => {
           <div className="space-y-3">
             <div className="flex items-center space-x-3 p-3 bg-slate-50 rounded-2xl border border-slate-200">
               <img
-                src={selectedApp?.applicantPhoto || 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100'}
+                src={selectedApp?.applicantPhoto || '/aarav.jpg'}
                 alt={selectedApp?.applicantName}
                 className="w-10 h-10 rounded-full border border-emerald-800 object-cover"
               />

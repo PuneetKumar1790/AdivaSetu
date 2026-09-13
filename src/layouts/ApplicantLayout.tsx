@@ -62,7 +62,7 @@ export const ApplicantLayout: React.FC = () => {
         <div className="md:hidden flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl shadow-xs">
           <div className="flex items-center space-x-2">
             <img
-              src={user?.avatar || 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100'}
+              src={user?.avatar || '/aarav.jpg'}
               alt={user?.name}
               className="w-8 h-8 rounded-full border border-emerald-800"
             />
@@ -86,7 +86,7 @@ export const ApplicantLayout: React.FC = () => {
           <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs space-y-3">
             <div className="flex items-center space-x-3">
               <img
-                src={user?.avatar || 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100'}
+                src={user?.avatar || '/aarav.jpg'}
                 alt={user?.name}
                 className="w-12 h-12 rounded-full border-2 border-[#0D3829] object-cover shadow-xs"
               />

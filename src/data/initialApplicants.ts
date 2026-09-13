@@ -7,7 +7,7 @@ export const INITIAL_APPLICANTS: User[] = [
     role: 'applicant',
     email: 'aarav.kumar.st@tribal.edu.in',
     mobile: '9876543210',
-    avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80',
+    avatar: '/aarav.jpg',
   },
   {
     id: 'app-002',
@@ -143,7 +143,7 @@ export const INITIAL_APPLICANTS: User[] = [
     role: 'applicant',
     email: 'vikram.saharia@curaj.ac.in',
     mobile: '9876543227',
-    avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80',
+    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80',
   },
   {
     id: 'app-019',
