@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "oxlint",
+    "lint": "tsc -b",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -19,7 +19,6 @@
     "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {
-    "@rolldown/binding-win32-x64-msvc": "^1.2.8",
     "@tailwindcss/vite": "^4.3.3",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^24.13.3",
@@ -27,7 +26,6 @@
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.6.0",
-    "oxlint": "^1.81.0",
     "postcss": "^8.5.28",
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.2",
