@@ -1,0 +1,47 @@
+import { NotificationItem } from '../types';
+
+export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
+  {
+    id: 'notif-01',
+    title: 'Action Required: Income Certificate Deficiency',
+    message: 'Your Income Certificate submitted for National Fellowship for ST (NFST) was flagged as expired. Please upload a valid certificate for FY 2026-27.',
+    type: 'warning',
+    read: false,
+    timestamp: '2026-09-11T11:00:15.000Z',
+    applicationId: 'ADVS-NFST-2026-00482',
+    actionUrl: '/applicant/deficiencies',
+    actionLabel: 'Resolve Deficiency',
+  },
+  {
+    id: 'notif-02',
+    title: 'ST Certificate Verified by AI Engine',
+    message: 'Your Scheduled Tribe caste certificate (Gond community) was validated with 98.4% confidence against DigiLocker e-Pramaan database.',
+    type: 'success',
+    read: false,
+    timestamp: '2026-09-10T10:46:04.000Z',
+    applicationId: 'ADVS-NFST-2026-00482',
+    actionUrl: '/applicant/documents',
+    actionLabel: 'View Documents',
+  },
+  {
+    id: 'notif-03',
+    title: 'Application Submitted Successfully',
+    message: 'Application ADVS-NFST-2026-00482 has been acknowledged. Digital tracking timeline is now active.',
+    type: 'info',
+    read: true,
+    timestamp: '2026-09-10T10:45:12.000Z',
+    applicationId: 'ADVS-NFST-2026-00482',
+    actionUrl: '/applicant/applications/ADVS-NFST-2026-00482',
+    actionLabel: 'Track Progress',
+  },
+  {
+    id: 'notif-04',
+    title: 'National Overseas Scholarship 2026 Open',
+    message: 'Applications are now live for top 1000 QS foreign university doctoral fellowships. Deadline: 15 Nov 2026.',
+    type: 'info',
+    read: true,
+    timestamp: '2026-09-01T09:00:00.000Z',
+    actionUrl: '/applicant/schemes',
+    actionLabel: 'Explore NOS',
+  },
+];

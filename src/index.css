@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --color-gov-green: #0D3829;
+    --color-gov-green-light: #16533D;
+    --color-gov-green-dark: #072319;
+    --color-gov-saffron: #D97706;
+    --color-gov-saffron-light: #F59E0B;
+    --color-gov-gold: #B45309;
+    --color-gov-parchment: #FDFBF7;
+    --color-gov-border: #E2E8F0;
+  }
+
+  body {
+    @apply bg-[#F8FAFC] text-slate-800 antialiased font-sans min-h-screen selection:bg-amber-100 selection:text-emerald-950;
+    margin: 0;
+    padding: 0;
+  }
+
+  #root {
+    min-height: 100vh;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    max-width: 100% !important;
+    border-inline: none !important;
+  }
+}
+
+/* Subtle Indian Tribal Warli Geometric Motif Background Pattern */
+.bg-tribal-pattern {
+  background-color: #0d3829;
+  background-image: radial-gradient(#16533d 1px, transparent 1px), radial-gradient(#16533d 1px, #0d3829 1px);
+  background-size: 40px 40px;
+  background-position: 0 0, 20px 20px;
+}
+
+.bg-tribal-subtle {
+  background-color: #fcfbf9;
+  background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.tribal-border-top {
+  border-top: 4px solid #D97706;
+  position: relative;
+}
+
+.tribal-border-top::after {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48px;
+  height: 3px;
+  background: #16533D;
+}
+
+/* Custom Scrollbar for dashboards and queue tables */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+@keyframes pulseSlow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse-slow {
+  animation: pulseSlow 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
