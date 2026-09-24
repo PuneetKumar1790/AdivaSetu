@@ -22,7 +22,7 @@ export const connectDB = async (): Promise<boolean> => {
 
   try {
     const conn = await mongoose.connect(rawUri, {
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 30000,
     });
     isConnected = true;
     console.log(`✅ [MongoDB Atlas] Connected successfully: ${conn.connection.host}`);
