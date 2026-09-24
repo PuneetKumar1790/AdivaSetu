@@ -1,6 +1,7 @@
 import { DocumentItem, DocumentType, VerificationStatus } from '../../types';
 import { apiConfig } from './apiConfig';
 import { eventBus } from '../events/eventBus';
+import { uploadDocumentToSupabase } from '../storage/supabaseClient';
 
 export interface AIScanStage {
   stage: number;
@@ -39,9 +40,16 @@ export const documentService = {
    * Simulated API upload with real latency and browser ObjectURL creation
    */
   async uploadDocument(file: File, type: DocumentType): Promise<UploadedFileResponse> {
-    await apiConfig.simulateLatency('documentUpload', `Uploading ${file.name} to secure vault...`);
+    await apiConfig.simulateLatency('documentUpload', `Uploading ${file.name} to secure Supabase vault...`);
 
-    const fileUrl = URL.createObjectURL(file);
+    let fileUrl: string;
+    try {
+      const res = await uploadDocumentToSupabase(file);
+      fileUrl = res.publicUrl || URL.createObjectURL(file);
+    } catch {
+      fileUrl = URL.createObjectURL(file);
+    }
+
     const sizeInKB = Math.round(file.size / 1024);
     const fileSize = sizeInKB > 1024 ? `${(sizeInKB / 1024).toFixed(1)} MB` : `${sizeInKB} KB`;
 
