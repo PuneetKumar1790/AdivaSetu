@@ -299,6 +299,106 @@ export const ScrutinyDetail: React.FC = () => {
         </div>
       )}
 
+      {/* Tab 3: Dossier Particulars */}
+      {activeTab === 'overview' && (
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-6">
+          <h3 className="text-base font-bold text-slate-900 border-b pb-3">
+            Candidate Application Dossier Particulars
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+            {/* Personal Details */}
+            <div className="space-y-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+              <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] text-[#0D3829]">
+                Personal & Socio-Economic Details
+              </h4>
+              <div className="space-y-2">
+                <div className="flex justify-between border-b border-slate-200 pb-1">
+                  <span className="text-slate-500">Full Name</span>
+                  <span className="font-bold text-slate-900">{app.applicantName}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-200 pb-1">
+                  <span className="text-slate-500">Gender & DOB</span>
+                  <span className="font-semibold text-slate-800">{app.formData.gender || 'Female'} • {app.formData.dob || '1998-05-12'}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-200 pb-1">
+                  <span className="text-slate-500">Tribal Community (ST)</span>
+                  <span className="font-semibold text-slate-800">{app.formData.tribeCommunity || 'Santhal'}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-200 pb-1">
+                  <span className="text-slate-500">Declared Family Income</span>
+                  <span className="font-bold text-emerald-800 font-mono">₹{app.formData.annualIncome ? Number(app.formData.annualIncome).toLocaleString('en-IN') : '2,40,000'} / annum</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Domicile / District</span>
+                  <span className="font-semibold text-slate-800">{app.formData.state || 'Jharkhand'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Academic & Scheme Details */}
+            <div className="space-y-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+              <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] text-[#0D3829]">
+                Enrolment & Academic Undertaking
+              </h4>
+              <div className="space-y-2">
+                <div className="flex justify-between border-b border-slate-200 pb-1">
+                  <span className="text-slate-500">Scheme Code</span>
+                  <span className="font-bold text-slate-900 font-mono">{app.schemeCode}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-200 pb-1">
+                  <span className="text-slate-500">Course / Programme</span>
+                  <span className="font-semibold text-slate-800">{app.formData.course || 'Ph.D in Ecology'}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-200 pb-1">
+                  <span className="text-slate-500">Institution / University</span>
+                  <span className="font-semibold text-slate-800">{app.formData.foreignUniversity || app.formData.institution || app.formData.university || 'IIT Delhi'}</span>
+                </div>
+                {app.formData.targetCountry && (
+                  <div className="flex justify-between border-b border-slate-200 pb-1">
+                    <span className="text-slate-500">Host Country & QS Rank</span>
+                    <span className="font-bold text-indigo-700">{app.formData.targetCountry} (QS #{app.formData.qsRanking || '3'})</span>
+                  </div>
+                )}
+                {app.formData.passportNumber && (
+                  <div className="flex justify-between border-b border-slate-200 pb-1">
+                    <span className="text-slate-500">Passport Number</span>
+                    <span className="font-mono font-bold text-slate-900">{app.formData.passportNumber}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Qualifying Marks / CGPA</span>
+                  <span className="font-bold text-slate-800 font-mono">{app.formData.percentageOrCgpa || '78.5%'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Direct Benefit Transfer (DBT) Banking Details */}
+            <div className="space-y-3 p-4 bg-slate-50 rounded-2xl border border-slate-200 md:col-span-2">
+              <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] text-[#0D3829]">
+                Direct Benefit Transfer (DBT) & Aadhaar Bank Seeding
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <span className="text-slate-500 block">Bank & Account</span>
+                  <span className="font-mono font-bold text-slate-900">{app.formData.bankName || 'State Bank of India'} - ••••{app.formData.accountNumber ? app.formData.accountNumber.slice(-4) : '4829'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block">IFSC Code</span>
+                  <span className="font-mono font-bold text-slate-900">{app.formData.ifsc || 'SBIN0001005'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block">NPCI Aadhaar Bridge</span>
+                  <span className="inline-flex items-center text-emerald-700 font-bold">
+                    <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Verified Active
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Confirmation Modal */}
       {confirmAction && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in">

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { mockEligibilityService } from '../../services/mockEligibilityService';
+import { useApplication } from '../../context/ApplicationContext';
 import { INDIAN_STATES, TRIBAL_COMMUNITIES } from '../../data/stateData';
-import { EligibilityQuery, EligibilityResult } from '../../types';
+import { EligibilityQuery, EligibilityResult, Scheme } from '../../types';
 import {
   Sparkles,
   ArrowRight,
@@ -14,13 +15,22 @@ import {
   Check,
   ShieldCheck,
   Loader2,
+  Layers,
 } from 'lucide-react';
 
 export const EligibilityWizard: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { schemes } = useApplication();
   const [currentStep, setCurrentStep] = useState(1);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<EligibilityResult | null>(null);
+
+  const schemeCodeParam = searchParams.get('scheme') || 'NFST';
+  const [targetSchemeCode, setTargetSchemeCode] = useState<string>(schemeCodeParam);
+
+  const targetScheme =
+    schemes.find((s) => s.code.toUpperCase() === targetSchemeCode.toUpperCase()) || schemes[0];
 
   // Form State
   const [formData, setFormData] = useState<Partial<EligibilityQuery>>({
@@ -34,9 +44,17 @@ export const EligibilityWizard: React.FC = () => {
     annualIncome: 240000,
     percentage: 88,
     admissionStatus: 'Confirmed Admission',
-    studyDestination: 'Domestic',
+    studyDestination: targetScheme.category === 'overseas' ? 'Overseas' : 'Domestic',
     researchProgramme: true,
   });
+
+  useEffect(() => {
+    if (targetScheme.category === 'overseas') {
+      setFormData((prev) => ({ ...prev, studyDestination: 'Overseas' }));
+    } else {
+      setFormData((prev) => ({ ...prev, studyDestination: 'Domestic' }));
+    }
+  }, [targetScheme]);
 
   const totalSteps = 4;
 
@@ -44,7 +62,6 @@ export const EligibilityWizard: React.FC = () => {
     if (currentStep < totalSteps) {
       setCurrentStep((prev) => prev + 1);
     } else {
-      // Trigger simulated AI Analysis
       runAIAnalysis();
     }
   };
@@ -58,10 +75,10 @@ export const EligibilityWizard: React.FC = () => {
     setResult(null);
 
     setTimeout(() => {
-      const evaluation = mockEligibilityService.evaluateEligibility(formData);
+      const evaluation = mockEligibilityService.evaluateEligibility(formData, targetScheme);
       setResult(evaluation);
       setIsAnalyzing(false);
-    }, 1200);
+    }, 900);
   };
 
   return (
@@ -400,10 +417,10 @@ export const EligibilityWizard: React.FC = () => {
               Recalculate
             </button>
             <button
-              onClick={() => navigate('/applicant/application/new')}
+              onClick={() => navigate(`/applicant/application/new?scheme=${targetScheme.code}`)}
               className="flex items-center space-x-2 px-6 py-2.5 rounded-xl text-xs font-bold bg-[#0D3829] hover:bg-[#16533D] text-white shadow-md transition-all active:scale-95"
             >
-              <span>Start Application for NFST</span>
+              <span>Start Application for {targetScheme.code}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

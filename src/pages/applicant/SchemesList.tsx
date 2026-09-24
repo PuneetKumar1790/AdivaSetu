@@ -134,14 +134,14 @@ export const SchemesList: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
               <Link
-                to="/applicant/eligibility"
+                to={`/applicant/eligibility?scheme=${scheme.code}`}
                 className="flex items-center justify-center space-x-1 py-2 px-3 rounded-xl text-xs font-bold bg-amber-100 hover:bg-amber-200 text-amber-900 transition-colors"
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Check Eligibility</span>
               </Link>
               <Link
-                to="/applicant/application/new"
+                to={`/applicant/application/new?scheme=${scheme.code}`}
                 className="flex items-center justify-center space-x-1 py-2 px-3 rounded-xl text-xs font-bold bg-[#0D3829] hover:bg-[#16533D] text-white transition-colors shadow-2xs"
               >
                 <span>Apply Now</span>

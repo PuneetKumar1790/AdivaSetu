@@ -1,81 +1,95 @@
-import { EligibilityFactor, EligibilityQuery, EligibilityResult } from '../types';
+import { EligibilityFactor, EligibilityQuery, EligibilityResult, Scheme } from '../types';
+import { browserDb } from './db/browserDb';
 
 export const mockEligibilityService = {
-  evaluateEligibility(query: Partial<EligibilityQuery>): EligibilityResult {
+  evaluateEligibility(query: Partial<EligibilityQuery>, targetScheme?: Scheme): EligibilityResult {
     const factors: EligibilityFactor[] = [];
     let passedCount = 0;
-    const totalFactors = 5;
 
-    // 1. ST Category
+    const scheme = targetScheme || browserDb.getSchemeByCode('NFST') || browserDb.getSchemes()[0];
+    const incomeCeiling = scheme?.maxIncomeCeiling || 600000;
+    const minMarks = scheme?.minPercentage || 55;
+    const maxAge = scheme?.maxAgeLimit || 36;
+    const isOverseasScheme = scheme?.category === 'overseas';
+
+    // 1. ST Category Mandate
     const isST = query.category === 'ST' || query.category === 'Scheduled Tribe';
     factors.push({
-      factor: 'ST Category Requirement',
+      factor: 'Scheduled Tribe (ST) Statutory Requirement',
       satisfied: isST,
       notes: isST
-        ? 'Scheduled Tribe category affirmed. Requires competent authority certificate.'
-        : 'Only Scheduled Tribe (ST) applicants are eligible under MoTA schemes.',
+        ? 'Scheduled Tribe category affirmed. Competent authority caste certificate required.'
+        : 'Candidate does not belong to ST category. MoTA fellowship schemes are strictly reserved for ST scholars.',
     });
     if (isST) passedCount++;
 
-    // 2. Academic Performance
+    // 2. Academic Criteria
     const pct = query.percentage || 75;
-    const isAcademicPass = pct >= 55;
+    const isAcademicPass = pct >= minMarks;
     factors.push({
-      factor: 'Academic Criterion (Min. 55%)',
+      factor: `Academic Qualifying Merit (Min. ${minMarks}% for ${scheme.code})`,
       satisfied: isAcademicPass,
       notes: isAcademicPass
-        ? `Academic score of ${pct}% satisfies Master's/Qualifying requirement (≥ 55%).`
-        : `Academic score of ${pct}% falls below the mandatory 55% threshold.`,
+        ? `Academic score of ${pct}% satisfies the prescribed ${minMarks}% minimum threshold.`
+        : `Academic score of ${pct}% falls below the mandatory ${minMarks}% threshold under ${scheme.code} rules.`,
     });
     if (isAcademicPass) passedCount++;
 
-    // 3. Family Income Criterion
+    // 3. Family Income Ceiling
     const income = query.annualIncome || 240000;
-    const isIncomePass = income <= 600000;
+    const isIncomePass = income <= incomeCeiling;
     factors.push({
-      factor: 'Family Income Ceiling (≤ ₹6.0 Lakh)',
+      factor: `Annual Family Income Ceiling (<= ₹${(incomeCeiling / 100000).toFixed(1)} Lakh for ${scheme.code})`,
       satisfied: isIncomePass,
       notes: isIncomePass
-        ? `Annual income ₹${income.toLocaleString('en-IN')} is within the prescribed ₹6,00,000 threshold.`
-        : `Annual income ₹${income.toLocaleString('en-IN')} exceeds the standard ₹6,00,000 ceiling.`,
+        ? `Annual family income ₹${income.toLocaleString('en-IN')} is within the prescribed ₹${incomeCeiling.toLocaleString('en-IN')} statutory limit.`
+        : `Annual family income ₹${income.toLocaleString('en-IN')} exceeds the ${scheme.code} statutory ceiling of ₹${incomeCeiling.toLocaleString('en-IN')}.`,
     });
     if (isIncomePass) passedCount++;
 
-    // 4. Enrolment / Admission Status
-    const isEnrolled = query.admissionStatus !== 'Not Applied';
-    factors.push({
-      factor: 'Programme Enrolment & Institution Fit',
-      satisfied: isEnrolled,
-      notes: isEnrolled
-        ? `Enrolled or admitted in recognized university/institute (${query.institution || 'University'}).`
-        : 'Valid admission or registration in a UGC/Govt recognized institution is mandatory.',
-    });
-    if (isEnrolled) passedCount++;
-
-    // 5. Age Requirement
+    // 4. Age Limit
     const age = query.age || 26;
-    const isAgePass = age <= 36;
+    const isAgePass = age <= maxAge;
     factors.push({
-      factor: 'Age Limit Criterion (≤ 36 Years)',
+      factor: `Candidate Age Limit (<= ${maxAge} Years for ${scheme.code})`,
       satisfied: isAgePass,
       notes: isAgePass
-        ? `Candidate age of ${age} years meets the age guidelines as of cut-off date.`
-        : `Candidate age of ${age} years exceeds the maximum age limit of 36 years.`,
+        ? `Candidate age (${age} years) satisfies statutory age criteria as of cut-off date.`
+        : `Candidate age (${age} years) exceeds the maximum age limit of ${maxAge} years.`,
     });
     if (isAgePass) passedCount++;
 
-    const isLikelyEligible = passedCount >= 4;
-    const confidence = isLikelyEligible ? 94 : Math.round((passedCount / totalFactors) * 85);
+    // 5. Study Destination & Enrolment Fit
+    const destination = query.studyDestination || 'Domestic';
+    const isDestinationPass = isOverseasScheme ? destination === 'Overseas' : destination === 'Domestic';
+    factors.push({
+      factor: `Study Destination & Programme Fit (${isOverseasScheme ? 'Top 1000 QS Foreign University' : 'Recognized Indian University'})`,
+      satisfied: isDestinationPass,
+      notes: isDestinationPass
+        ? `Study destination (${destination}) aligns with ${scheme.name} institutional guidelines.`
+        : `Destination mismatch: ${scheme.code} requires ${isOverseasScheme ? 'Overseas admission' : 'Domestic Indian university admission'}.`,
+    });
+    if (isDestinationPass) passedCount++;
 
-    const matchedSchemes = [];
-    if (query.studyDestination === 'Overseas') {
-      matchedSchemes.push('National Overseas Scholarship for ST Students (NOS)');
-    } else {
-      matchedSchemes.push('National Fellowship for Scheduled Tribes (NFST)');
-      if (pct >= 80) {
-        matchedSchemes.push('Top Class Education Scheme for ST Students');
+    const totalFactors = factors.length;
+    const isLikelyEligible = passedCount === totalFactors;
+    const confidence = isLikelyEligible ? 96 : Math.round((passedCount / totalFactors) * 85);
+
+    // Dynamic Matched Schemes
+    const allSchemes = browserDb.getSchemes();
+    const matchedSchemes: string[] = [];
+
+    allSchemes.forEach((s) => {
+      const matchCat = isST;
+      const matchInc = income <= (s.maxIncomeCeiling || 600000);
+      const matchPct = pct >= (s.minPercentage || 50);
+      const matchAge = age <= (s.maxAgeLimit || 36);
+      const matchDest = s.category === 'overseas' ? destination === 'Overseas' : destination === 'Domestic';
+
+      if (matchCat && matchInc && matchPct && matchAge && matchDest) {
+        matchedSchemes.push(`${s.name} (${s.code})`);
       }
-    }
+    });
 
     return {
       isLikelyEligible,
@@ -86,9 +100,9 @@ export const mockEligibilityService = {
         ? 'Conditional Eligibility'
         : 'Not Eligible',
       factors,
-      matchedSchemes,
+      matchedSchemes: matchedSchemes.length > 0 ? matchedSchemes : [`${scheme.name} (${scheme.code})`],
       disclaimer:
-        'AI decision-support estimate based on self-reported inputs. Final eligibility will be officially determined during document scrutiny by the Ministry of Tribal Affairs.',
+        'AI decision-support analysis based on real-time statutory scheme rules. Official eligibility will be determined upon document scrutiny under Rule 14(b) by the Ministry of Tribal Affairs.',
     };
   },
 };

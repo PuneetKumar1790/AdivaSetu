@@ -1,4 +1,10 @@
-export type UserRole = 'applicant' | 'officer';
+export type UserRole =
+  | 'applicant'
+  | 'officer'
+  | 'institute_verifier'
+  | 'scrutiny_officer'
+  | 'screening_officer'
+  | 'approving_authority';
 
 export interface User {
   id: string;
@@ -10,9 +16,40 @@ export interface User {
   department?: string;
   avatar?: string;
   token?: string;
+  organization?: string;
 }
 
 export type SchemeCategory = 'fellowship' | 'scholarship' | 'overseas' | 'domestic';
+
+export interface SchemeRule {
+  id: string;
+  field: 'category' | 'annualIncome' | 'percentage' | 'age' | 'studyDestination' | 'institutionType';
+  operator: '<=' | '>=' | '==' | '!=' | 'in';
+  value: any;
+  label: string;
+  mandatory: boolean;
+}
+
+export interface SchemeDocumentRequirement {
+  id: string;
+  type: DocumentType;
+  name: string;
+  hindiName?: string;
+  description: string;
+  mandatory: boolean;
+  maxSizeMB: number;
+}
+
+export interface SchemeSpecificField {
+  id: string;
+  name: string;
+  label: string;
+  type: 'text' | 'number' | 'select' | 'date';
+  required: boolean;
+  options?: string[];
+  placeholder?: string;
+  helpText?: string;
+}
 
 export interface Scheme {
   id: string;
@@ -32,6 +69,19 @@ export interface Scheme {
   slotsAvailable: number;
   description: string;
   guidelinesUrl?: string;
+  // Configurable Scheme Engine Fields
+  academicYear?: string;
+  openingDate?: string;
+  eligibleCourses?: string[];
+  eligibleInstitutions?: string;
+  maxIncomeCeiling?: number;
+  minPercentage?: number;
+  maxAgeLimit?: number;
+  rules?: SchemeRule[];
+  requiredDocuments?: SchemeDocumentRequirement[];
+  customFields?: SchemeSpecificField[];
+  selectionWeights?: SchemeConfigurationWeights;
+  version?: string;
 }
 
 export type ApplicationStatus =
@@ -55,7 +105,15 @@ export type DocumentType =
   | 'degree_certificate'
   | 'admission_letter'
   | 'bank_passbook'
-  | 'research_proposal';
+  | 'research_proposal'
+  | 'passport'
+  | 'offer_letter_foreign'
+  | 'qs_ranking_proof'
+  | 'sop_study_plan'
+  | 'language_test_score'
+  | 'fee_receipt'
+  | 'joining_report'
+  | 'progress_report';
 
 export type VerificationStatus = 'pending' | 'verifying' | 'verified' | 'flagged' | 'deficient';
 
@@ -145,6 +203,16 @@ export interface ApplicationFormData {
   researchArea?: string;
   researchProposalTitle?: string;
   supervisorName?: string;
+  // Scheme-specific dynamic fields (e.g. NOS, TCE-ST)
+  targetCountry?: string;
+  foreignUniversity?: string;
+  qsRanking?: string;
+  passportNumber?: string;
+  languageTestScore?: string;
+  entranceExamName?: string;
+  entranceExamRank?: string;
+  entranceRollNo?: string;
+  customFieldValues?: Record<string, string>;
   // 4. Scheme details
   schemeId: string;
   schemeCode: string;
@@ -160,6 +228,31 @@ export interface ApplicationFormData {
   accountNumber: string;
   ifsc: string;
   branch: string;
+  // 7. Post-selection & onboarding (optional, populated after selection)
+  joiningDate?: string;
+  joiningReportUrl?: string;
+  joiningReportStatus?: 'pending' | 'submitted' | 'approved';
+  activeTenorYear?: number;
+  progressReportSubmitted?: boolean;
+}
+
+export interface JoiningReportData {
+  joiningDate: string;
+  department: string;
+  supervisorName: string;
+  supervisorEmail: string;
+  remarks: string;
+  verifiedByInstitute: boolean;
+}
+
+export interface ProgressReportData {
+  academicYear: string;
+  tenureYear: number; // 1, 2, 3...
+  summary: string;
+  publicationsCount: number;
+  recommendationForHRA: boolean;
+  contingencyClaimed: number;
+  status: 'submitted' | 'approved';
 }
 
 export interface Application {

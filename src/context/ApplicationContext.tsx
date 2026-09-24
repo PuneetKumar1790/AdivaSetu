@@ -6,7 +6,13 @@ import React, {
   ReactNode,
   useEffect,
 } from 'react';
-import { Application, ApplicationStatus, NotificationItem, SchemeConfigurationWeights } from '../types';
+import {
+  Application,
+  ApplicationStatus,
+  NotificationItem,
+  Scheme,
+  SchemeConfigurationWeights,
+} from '../types';
 import { browserDb } from '../services/db/browserDb';
 import { applicationService, ApplicationQueryParams, PaginatedResponse } from '../services/api/applicationService';
 import { eventBus } from '../services/events/eventBus';
@@ -17,6 +23,11 @@ import confetti from 'canvas-confetti';
 interface ApplicationContextType {
   applications: Application[];
   notifications: NotificationItem[];
+  schemes: Scheme[];
+  activeSchemeCode: string;
+  setActiveSchemeCode: (code: string) => void;
+  getScheme: (codeOrId: string) => Scheme | undefined;
+  updateScheme: (scheme: Scheme) => void;
   schemeWeights: SchemeConfigurationWeights;
   isLoading: boolean;
   isSyncing: boolean;
@@ -46,6 +57,8 @@ const ApplicationContext = createContext<ApplicationContextType | undefined>(und
 export const ApplicationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [applications, setApplications] = useState<Application[]>(() => browserDb.getApplications());
   const [notifications, setNotifications] = useState<NotificationItem[]>(() => browserDb.getNotifications());
+  const [schemes, setSchemes] = useState<Scheme[]>(() => browserDb.getSchemes());
+  const [activeSchemeCode, setActiveSchemeCode] = useState<string>('NFST');
   const [schemeWeights, setSchemeWeights] = useState<SchemeConfigurationWeights>(() => browserDb.getSchemeWeights());
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
@@ -253,11 +266,32 @@ export const ApplicationProvider: React.FC<{ children: ReactNode }> = ({ childre
     };
   }, []);
 
+  const getScheme = useCallback((codeOrId: string) => {
+    return browserDb.getSchemeByCode(codeOrId);
+  }, []);
+
+  const updateScheme = useCallback(
+    (scheme: Scheme) => {
+      browserDb.saveScheme(scheme);
+      setSchemes(browserDb.getSchemes());
+      if (scheme.selectionWeights) {
+        setSchemeWeights(scheme.selectionWeights);
+      }
+      success('Scheme Configuration Saved', `${scheme.name} (${scheme.code}) parameters updated.`);
+    },
+    [success]
+  );
+
   return (
     <ApplicationContext.Provider
       value={{
         applications,
         notifications,
+        schemes,
+        activeSchemeCode,
+        setActiveSchemeCode,
+        getScheme,
+        updateScheme,
         schemeWeights,
         isLoading,
         isSyncing,

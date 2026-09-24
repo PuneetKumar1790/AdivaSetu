@@ -3,12 +3,14 @@ import {
   AuditEvent,
   CommunicationNotice,
   NotificationItem,
+  Scheme,
   SchemeConfigurationWeights,
   User,
 } from '../../types';
 import { INITIAL_APPLICANTS, DEMO_OFFICER } from '../../data/initialApplicants';
 import { INITIAL_APPLICATIONS } from '../../data/initialApplications';
 import { INITIAL_NOTIFICATIONS } from '../../data/initialNotifications';
+import { INITIAL_SCHEMES } from '../../data/schemesData';
 
 export interface SystemSettings {
   apiMode: 'mock' | 'real';
@@ -27,6 +29,7 @@ const TABLES = {
   AUDIT_EVENTS: `${DB_PREFIX}audit_events`,
   COMMUNICATIONS: `${DB_PREFIX}communications`,
   SCHEME_WEIGHTS: `${DB_PREFIX}scheme_weights`,
+  SCHEMES: `${DB_PREFIX}schemes`,
   SYSTEM_SETTINGS: `${DB_PREFIX}system_settings`,
 };
 
@@ -199,6 +202,9 @@ export const browserDb = {
     if (!localStorage.getItem(TABLES.SCHEME_WEIGHTS)) {
       localStorage.setItem(TABLES.SCHEME_WEIGHTS, JSON.stringify(DEFAULT_WEIGHTS));
     }
+    if (!localStorage.getItem(TABLES.SCHEMES)) {
+      localStorage.setItem(TABLES.SCHEMES, JSON.stringify(INITIAL_SCHEMES));
+    }
     if (!localStorage.getItem(TABLES.SYSTEM_SETTINGS)) {
       localStorage.setItem(TABLES.SYSTEM_SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
     }
@@ -346,7 +352,46 @@ export const browserDb = {
     return fullEvent;
   },
 
-  // 4. Scheme Weights
+  // 4. Scheme Configuration Engine (Dynamic PS239 Architecture)
+  getSchemes(): Scheme[] {
+    this.init();
+    try {
+      const raw = localStorage.getItem(TABLES.SCHEMES);
+      return raw ? JSON.parse(raw) : INITIAL_SCHEMES;
+    } catch {
+      return INITIAL_SCHEMES;
+    }
+  },
+
+  getSchemeByCode(codeOrId: string): Scheme | undefined {
+    const list = this.getSchemes();
+    return list.find(
+      (s) =>
+        s.code.toUpperCase() === codeOrId.toUpperCase() ||
+        s.id.toLowerCase() === codeOrId.toLowerCase()
+    );
+  },
+
+  saveScheme(updatedScheme: Scheme): void {
+    this.init();
+    const list = this.getSchemes();
+    const index = list.findIndex(
+      (s) => s.id === updatedScheme.id || s.code === updatedScheme.code
+    );
+    if (index >= 0) {
+      list[index] = updatedScheme;
+    } else {
+      list.push(updatedScheme);
+    }
+    localStorage.setItem(TABLES.SCHEMES, JSON.stringify(list));
+    // If it has selectionWeights, also update active weights if it's currently selected
+    if (updatedScheme.selectionWeights) {
+      this.saveSchemeWeights(updatedScheme.selectionWeights);
+    }
+    this.touchSync();
+  },
+
+  // 4b. Scheme Weights (Legacy compatibility)
   getSchemeWeights(): SchemeConfigurationWeights {
     this.init();
     try {
@@ -387,6 +432,31 @@ export const browserDb = {
   },
 
   // 6. User Auth & Session
+  getUsers(): User[] {
+    this.init();
+    try {
+      const raw = localStorage.getItem(TABLES.USERS);
+      return raw ? JSON.parse(raw) : INITIAL_APPLICANTS;
+    } catch {
+      return INITIAL_APPLICANTS;
+    }
+  },
+
+  registerUser(newUser: User): User {
+    this.init();
+    const users = this.getUsers();
+    const existingIndex = users.findIndex((u) => u.email.toLowerCase() === newUser.email.toLowerCase());
+    if (existingIndex >= 0) {
+      users[existingIndex] = newUser;
+    } else {
+      users.push(newUser);
+    }
+    localStorage.setItem(TABLES.USERS, JSON.stringify(users));
+    localStorage.setItem(TABLES.CURRENT_USER, JSON.stringify(newUser));
+    this.touchSync();
+    return newUser;
+  },
+
   getCurrentUser(): User | null {
     this.init();
     try {
@@ -438,6 +508,7 @@ export const browserDb = {
     const seeded = generateSimulatedApplications(INITIAL_APPLICATIONS);
     localStorage.setItem(TABLES.APPLICATIONS, JSON.stringify(seeded));
     localStorage.setItem(TABLES.NOTIFICATIONS, JSON.stringify(INITIAL_NOTIFICATIONS));
+    localStorage.setItem(TABLES.SCHEMES, JSON.stringify(INITIAL_SCHEMES));
     localStorage.setItem(TABLES.SCHEME_WEIGHTS, JSON.stringify(DEFAULT_WEIGHTS));
     localStorage.removeItem(TABLES.AUDIT_EVENTS);
     localStorage.removeItem(TABLES.COMMUNICATIONS);

@@ -173,3 +173,49 @@ export const DEMO_OFFICER: User = {
   department: 'Division of Higher Education & Fellowships, MoTA',
   avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
 };
+
+export const DEMO_INSTITUTE_VERIFIER: User = {
+  id: 'off-inst-002',
+  name: 'Prof. S. R. Ramaswamy',
+  role: 'institute_verifier',
+  email: 'registrar.nodal@jnu.ac.in',
+  mobile: '9811092810',
+  designation: 'University Nodal Officer / Dean of Student Welfare',
+  organization: 'Jawaharlal Nehru University, New Delhi',
+  department: 'University Fellowship & Enrolment Cell',
+  avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+};
+
+export const DEMO_SCRUTINY_OFFICER: User = {
+  id: 'off-scrt-003',
+  name: 'Shri Anand Minz',
+  role: 'scrutiny_officer',
+  email: 'anand.minz@tribal.gov.in',
+  mobile: '9845019283',
+  designation: 'Senior Scrutiny Officer (Rule 14b Desk)',
+  department: 'National Document Scrutiny & Verification Cell, MoTA',
+  avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+};
+
+export const DEMO_SCREENING_OFFICER: User = {
+  id: 'off-scrn-004',
+  name: 'Dr. Meenakshi Munda',
+  role: 'screening_officer',
+  email: 'meenakshi.munda@tribal.gov.in',
+  mobile: '9810293847',
+  designation: 'Chairperson, National Merit Screening Committee',
+  department: 'Fellowship Selection Board, MoTA',
+  avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+};
+
+export const DEMO_APPROVING_AUTHORITY: User = {
+  id: 'off-appr-005',
+  name: 'Smt. Rekha Sharma, IAS',
+  role: 'approving_authority',
+  email: 'jointsec.fellowships@tribal.gov.in',
+  mobile: '9811002233',
+  designation: 'Joint Secretary to Government of India',
+  department: 'Ministry of Tribal Affairs, Shastri Bhawan',
+  avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80',
+};
+

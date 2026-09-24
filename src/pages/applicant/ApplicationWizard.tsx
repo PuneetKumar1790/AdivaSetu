@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useApplication } from '../../context/ApplicationContext';
 import { useToast } from '../../context/ToastContext';
 import { INDIAN_STATES, TRIBAL_COMMUNITIES } from '../../data/stateData';
-import { INITIAL_SCHEMES } from '../../data/schemesData';
-import { Application, ApplicationFormData, DocumentItem } from '../../types';
+import { Application, ApplicationFormData, DocumentItem, DocumentType } from '../../types';
 import { AIVerificationModal } from '../../components/ai/AIVerificationModal';
 import { mockDocumentService } from '../../services/mockDocumentService';
 import {
@@ -21,6 +20,9 @@ import {
   Sparkles,
   Check,
   Eye,
+  Globe2,
+  Layers,
+  Award,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -28,20 +30,21 @@ const STORAGE_DRAFT_KEY = 'adivasetu_app_wizard_draft';
 
 export const ApplicationWizard: React.FC = () => {
   const navigate = useNavigate();
-  const { createApplication } = useApplication();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { createApplication, schemes, activeSchemeCode, setActiveSchemeCode } = useApplication();
   const { success, info, warning } = useToast();
 
   const [currentStep, setCurrentStep] = useState(1);
   const [activeAIModalDoc, setActiveAIModalDoc] = useState<DocumentItem | null>(null);
 
-  // Form State initialized from localStorage or defaults
+  // Determine current active scheme from URL or context
+  const queryScheme = searchParams.get('scheme') || activeSchemeCode || 'NFST';
+  const activeScheme =
+    schemes.find((s) => s.code.toUpperCase() === queryScheme.toUpperCase() || s.id === queryScheme) ||
+    schemes[0];
+
+  // Form State
   const [formData, setFormData] = useState<ApplicationFormData>(() => {
-    const saved = localStorage.getItem(STORAGE_DRAFT_KEY);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {}
-    }
     return {
       fullName: 'Aarav Kumar',
       dob: '1999-06-12',
@@ -58,24 +61,34 @@ export const ApplicationWizard: React.FC = () => {
       email: 'aarav.kumar.st@tribal.edu.in',
       mobile: '9876543210',
       alternateMobile: '9811223344',
+      // Domestic defaults
       highestQualification: 'Master of Science (M.Sc) in Environmental Sciences',
       university: 'Jawaharlal Nehru University',
       institution: 'School of Environmental Sciences, JNU',
       course: 'Ph.D in Environmental Sciences',
       specialization: 'Forest Hydrology & Tribal Agroforestry',
       passingYear: '2024',
-      percentageOrCgpa: '8.82 CGPA',
-      admissionStatus: 'Confirmed Regular Full-Time Ph.D',
+      percentageOrCgpa: '88.2%',
+      admissionStatus: 'Confirmed Regular Full-Time',
       researchArea: 'Indigenous Forest Conservation and Climate Resilience',
-      researchProposalTitle: 'Evolving Agroforestry and Water Retention Systems of Gond Communities in Central Highlands',
+      researchProposalTitle: 'Evolving Agroforestry Systems of Central Indian Tribal Communities',
       supervisorName: 'Prof. S. R. Ramaswamy',
-      schemeId: 'nfst-01',
-      schemeCode: 'NFST',
-      schemeName: 'National Fellowship for Scheduled Tribes',
+      // Overseas defaults
+      targetCountry: 'United Kingdom',
+      foreignUniversity: 'University of Oxford',
+      qsRanking: '3',
+      passportNumber: 'Z9482014',
+      languageTestScore: 'IELTS 8.0 Band Overall',
+      // Scheme Details
+      schemeId: activeScheme.id,
+      schemeCode: activeScheme.code,
+      schemeName: activeScheme.name,
+      // Financial
       annualIncome: '240000',
       incomeCertificateNo: 'INC/DEL/2026/8940',
       issuingState: 'Delhi',
       issueDate: '2026-05-15',
+      // Bank Details
       bankName: 'State Bank of India',
       accountHolder: 'Aarav Kumar',
       accountNumber: '30492819004821',
@@ -84,95 +97,69 @@ export const ApplicationWizard: React.FC = () => {
     };
   });
 
-  // Mandatory Documents Checklist with real file hooks
-  const [documents, setDocuments] = useState<DocumentItem[]>([
-    {
-      id: 'doc-st',
-      type: 'st_certificate',
-      name: 'ST Community Certificate',
-      required: true,
-      fileName: 'ST_Certificate_Aarav.pdf',
-      fileSize: '1.2 MB',
-      verificationStatus: 'verified',
-      aiConfidence: 98.4,
-    },
-    {
-      id: 'doc-inc',
-      type: 'income_certificate',
-      name: 'Annual Family Income Certificate (FY 2026-27)',
-      required: true,
-      fileName: 'Income_Certificate_2026.pdf',
-      fileSize: '950 KB',
-      verificationStatus: 'verified',
-      aiConfidence: 98.2,
-    },
-    {
-      id: 'doc-adh',
-      type: 'aadhaar',
-      name: 'Aadhaar Identity Proof',
-      required: true,
-      fileName: 'Aadhaar_Front_Back.pdf',
-      fileSize: '1.1 MB',
-      verificationStatus: 'verified',
-      aiConfidence: 99.1,
-    },
-    {
-      id: 'doc-mks',
-      type: 'marksheet',
-      name: 'Post-Graduation Degree Marksheet',
-      required: true,
-      fileName: 'MSc_Consolidated_Marksheet.pdf',
-      fileSize: '2.3 MB',
-      verificationStatus: 'verified',
-      aiConfidence: 96.5,
-    },
-    {
-      id: 'doc-adm',
-      type: 'admission_letter',
-      name: 'Ph.D Enrolment / Admission Bonafide',
-      required: true,
-      fileName: 'PhD_Admission_Letter_SES.pdf',
-      fileSize: '1.4 MB',
-      verificationStatus: 'verified',
-      aiConfidence: 97.4,
-    },
-    {
-      id: 'doc-bnk',
-      type: 'bank_passbook',
-      name: 'Bank Passbook / Cancelled Cheque',
-      required: true,
-      fileName: 'SBI_Passbook_Frontpage.pdf',
-      fileSize: '890 KB',
-      verificationStatus: 'verified',
-      aiConfidence: 98.9,
-    },
-    {
-      id: 'doc-syn',
-      type: 'research_proposal',
-      name: 'Research Synopsis & Guide Approval',
-      required: true,
-      fileName: 'Research_Synopsis_SES_JNU.pdf',
-      fileSize: '3.2 MB',
-      verificationStatus: 'verified',
-      aiConfidence: 95.0,
-    },
-  ]);
+  // Keep form scheme code in sync when scheme changes
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      schemeId: activeScheme.id,
+      schemeCode: activeScheme.code,
+      schemeName: activeScheme.name,
+    }));
+  }, [activeScheme]);
+
+  // Generate dynamic required documents list based on activeScheme
+  const [documents, setDocuments] = useState<DocumentItem[]>([]);
+
+  useEffect(() => {
+    if (activeScheme.requiredDocuments && activeScheme.requiredDocuments.length > 0) {
+      const dynamicDocs: DocumentItem[] = activeScheme.requiredDocuments.map((req, idx) => {
+        let defaultFileName = `${req.type}_aarav.pdf`;
+        let defaultSize = '1.2 MB';
+        let defaultConfidence = 98.2;
+
+        if (req.type === 'passport') {
+          defaultFileName = 'Indian_Passport_Aarav_Kumar.pdf';
+          defaultSize = '1.8 MB';
+          defaultConfidence = 99.4;
+        } else if (req.type === 'offer_letter_foreign') {
+          defaultFileName = 'Oxford_Unconditional_Offer_Letter.pdf';
+          defaultSize = '2.4 MB';
+          defaultConfidence = 97.8;
+        } else if (req.type === 'qs_ranking_proof') {
+          defaultFileName = 'QS_Rank_Proof_Oxford_2026.pdf';
+          defaultSize = '680 KB';
+          defaultConfidence = 98.9;
+        } else if (req.type === 'sop_study_plan') {
+          defaultFileName = 'SOP_Study_Plan_Oxford.pdf';
+          defaultSize = '1.5 MB';
+          defaultConfidence = 96.5;
+        }
+
+        return {
+          id: `doc-${activeScheme.code.toLowerCase()}-${idx}-${req.type}`,
+          type: req.type,
+          name: req.name,
+          required: req.mandatory,
+          fileName: defaultFileName,
+          fileSize: defaultSize,
+          verificationStatus: 'verified',
+          aiConfidence: defaultConfidence,
+        };
+      });
+      setDocuments(dynamicDocs);
+    }
+  }, [activeScheme]);
 
   const [declarationChecked, setDeclarationChecked] = useState(false);
-
-  // Auto-save draft to localStorage
-  useEffect(() => {
-    localStorage.setItem(STORAGE_DRAFT_KEY, JSON.stringify(formData));
-  }, [formData]);
 
   const steps = [
     { num: 1, label: 'Personal Details' },
     { num: 2, label: 'Contact Details' },
-    { num: 3, label: 'Education' },
-    { num: 4, label: 'Scheme Details' },
+    { num: 3, label: activeScheme.category === 'overseas' ? 'Overseas Study Details' : 'Academic & Programme' },
+    { num: 4, label: 'Scheme Mandates' },
     { num: 5, label: 'Financial' },
     { num: 6, label: 'Bank Details' },
-    { num: 7, label: 'Documents' },
+    { num: 7, label: `Documents (${documents.length})` },
     { num: 8, label: 'Review' },
     { num: 9, label: 'Declaration' },
     { num: 10, label: 'Submit' },
@@ -197,7 +184,6 @@ export const ApplicationWizard: React.FC = () => {
         )
       );
 
-      // Open AI scanner automatically for interactive realism
       const targetDoc = documents.find((d) => d.id === docId);
       if (targetDoc) {
         setActiveAIModalDoc({
@@ -221,7 +207,7 @@ export const ApplicationWizard: React.FC = () => {
     }
 
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const newAppId = `ADVS-NFST-2026-${randomSuffix}`;
+    const newAppId = `ADVS-${activeScheme.code}-2026-${randomSuffix}`;
 
     const newApplication: Application = {
       id: newAppId,
@@ -248,41 +234,40 @@ export const ApplicationWizard: React.FC = () => {
           hindiName: 'आवेदन प्रस्तुत किया गया',
           status: 'completed',
           date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
-          actor: 'Applicant (e-Sign Authenticated)',
-          description: 'Application received and registered on MoTA Central Fellowship Gateway.',
+          actor: 'Scholar Applicant',
+          description: `Application registered under ${activeScheme.name} (${activeScheme.code}).`,
         },
         {
           id: 't-2',
-          name: 'AI Document Verification',
-          hindiName: 'एआई दस्तावेज़ सत्यापन',
+          name: 'AI Document Scrutiny',
+          hindiName: 'दस्तावेज़ विश्लेषण',
           status: 'in_progress',
-          actor: 'AI Vision OCR Engine',
-          description: 'Multilingual field extraction and registry authentication in progress.',
+          description: 'Multilingual OCR extraction and cross-field registry comparison in progress.',
         },
         {
           id: 't-3',
-          name: 'Ministry Officer Scrutiny',
-          hindiName: 'मंत्रालय अधिकारी जांच',
+          name: 'Officer Screening',
+          hindiName: 'शासकीय चयन',
           status: 'pending',
-          description: 'Official scrutiny against reservation norms and eligibility guidelines.',
+          description: 'Official scrutiny against statutory reservation norms and seat matrix.',
         },
         {
           id: 't-4',
-          name: 'Screening Committee Selection',
-          hindiName: 'चयन समिति निर्णय',
+          name: 'Merit Sanction',
+          hindiName: 'अंतिम स्वीकृति',
           status: 'pending',
-          description: 'Ranking aggregation and provisional fellowship sanction.',
+          description: 'Merit ranking compilation and Direct Benefit Transfer (DBT) sanction.',
         },
       ],
       auditTrail: [
         {
-          id: 'aud-' + Date.now(),
+          id: `aud-${Date.now()}`,
           applicationId: newAppId,
           timestamp: new Date().toISOString(),
-          actor: `${formData.fullName} (Applicant)`,
+          actor: formData.fullName,
           actorRole: 'applicant',
           action: 'APPLICATION_SUBMITTED',
-          description: 'Application submitted with 7 authenticated documents and UIDAI Aadhaar e-Sign.',
+          description: `Formal online application submitted for ${activeScheme.name} (${activeScheme.code}).`,
           statusType: 'success',
         },
       ],
@@ -290,39 +275,41 @@ export const ApplicationWizard: React.FC = () => {
 
     await createApplication(newApplication);
 
-    // Trigger celebration
     confetti({
       particleCount: 100,
       spread: 70,
       origin: { y: 0.6 },
+      colors: ['#0D3829', '#F59E0B', '#10B981'],
     });
 
-    localStorage.removeItem(STORAGE_DRAFT_KEY);
-
-    success('Application Submitted Successfully', `Registered with ID: ${newAppId}`);
     navigate(`/applicant/applications/${newAppId}`);
   };
 
   return (
-    <div className="space-y-6 pb-12">
-      {/* Header Bar */}
+    <div className="space-y-6">
+      {/* Header with Scheme Switcher Pills */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-            Multi-Step Scholarship Wizard
-          </span>
+          <div className="flex items-center space-x-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-300">
+              Online Application Ingestion
+            </span>
+            <span className="text-xs font-mono font-bold bg-amber-50 text-amber-900 border border-amber-300 px-2 py-0.5 rounded">
+              {activeScheme.code}
+            </span>
+          </div>
           <h1 className="text-xl font-bold text-slate-900 mt-1">
-            Application for National Fellowship for Scheduled Tribes (NFST)
+            {activeScheme.name}
           </h1>
           <p className="text-xs text-slate-500 font-hindi">
-            अनुसूचित जनजातियों के लिए राष्ट्रीय अध्येतावृत्ति आवेदन प्रपत्र
+            {activeScheme.hindiName} • शैक्षणिक सत्र {activeScheme.academicYear || '2026-27'}
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center space-x-2">
           <button
             onClick={handleSaveDraft}
-            className="flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-colors"
+            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 border border-slate-300"
           >
             <Save className="w-3.5 h-3.5" />
             <span>Save Draft</span>
@@ -330,54 +317,70 @@ export const ApplicationWizard: React.FC = () => {
         </div>
       </div>
 
-      {/* Persistent Progress Step Bar (Requirement 12) */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs overflow-x-auto">
-        <div className="flex items-center min-w-[680px] justify-between text-xs">
-          {steps.map((st) => {
-            const isDone = st.num < currentStep;
-            const isCurrent = st.num === currentStep;
-            return (
-              <button
-                key={st.num}
-                onClick={() => setCurrentStep(st.num)}
-                className="flex items-center space-x-1.5 focus:outline-none"
-              >
-                <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[11px] ${
-                    isDone
-                      ? 'bg-[#0D3829] text-white'
-                      : isCurrent
-                      ? 'bg-amber-500 text-slate-950 ring-2 ring-amber-200'
-                      : 'bg-slate-100 text-slate-400'
-                  }`}
-                >
-                  {isDone ? <Check className="w-3.5 h-3.5" /> : st.num}
-                </div>
-                <span
-                  className={`text-[11px] font-semibold whitespace-nowrap ${
-                    isCurrent ? 'text-slate-900 font-bold' : isDone ? 'text-emerald-900' : 'text-slate-400'
-                  }`}
-                >
-                  {st.label}
-                </span>
-                {st.num < 10 && <span className="text-slate-300 ml-1">›</span>}
-              </button>
-            );
-          })}
+      {/* Scheme Selection Banner (Demonstrating PS239 "Two-Scheme" Instant Switch) */}
+      <div className="bg-slate-900 text-white p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center space-x-2">
+          <Layers className="w-4 h-4 text-amber-400" />
+          <span className="text-xs font-bold">Applying For:</span>
+          <span className="text-xs font-mono text-emerald-400 font-bold bg-emerald-950 px-2 py-0.5 rounded border border-emerald-700">
+            {activeScheme.name} ({activeScheme.code})
+          </span>
+        </div>
+
+        <div className="flex items-center space-x-1.5">
+          <span className="text-[11px] text-slate-400">Switch Scheme:</span>
+          {schemes.map((s) => (
+            <button
+              key={s.code}
+              onClick={() => {
+                setSearchParams({ scheme: s.code });
+                setActiveSchemeCode(s.code);
+              }}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                activeScheme.code === s.code
+                  ? 'bg-amber-400 text-slate-950 shadow-xs'
+                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+              }`}
+            >
+              {s.code}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Wizard Form Workspace */}
-      <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
-        {/* Step 1: Personal Details (Requirement 13) */}
+      {/* Step Progress Pills */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs overflow-x-auto">
+        <div className="flex items-center justify-between min-w-[700px] gap-2">
+          {steps.map((st) => (
+            <button
+              key={st.num}
+              onClick={() => setCurrentStep(st.num)}
+              className={`flex-1 py-2 px-2 text-center rounded-xl text-xs font-bold transition-all ${
+                currentStep === st.num
+                  ? 'bg-[#0D3829] text-white shadow-sm'
+                  : currentStep > st.num
+                  ? 'bg-emerald-50 text-emerald-900 border border-emerald-200'
+                  : 'bg-slate-50 text-slate-400 border border-slate-200'
+              }`}
+            >
+              <div className="text-[10px] uppercase font-mono">Step {st.num}</div>
+              <div className="truncate">{st.label}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Main Form Body */}
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
+        {/* Step 1: Personal Details */}
         {currentStep === 1 && (
           <div className="space-y-4 text-xs">
             <h3 className="text-sm font-bold text-slate-800 border-b pb-2 uppercase tracking-wider">
-              1. Personal Particulars
+              1. Candidate Identification Particulars
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="font-semibold text-slate-700">Full Name (As in Matriculation)</label>
+                <label className="font-semibold text-slate-700">Full Name (As in Matriculation / Passport)</label>
                 <input
                   type="text"
                   value={formData.fullName}
@@ -445,7 +448,7 @@ export const ApplicationWizard: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="font-semibold text-slate-700">Aadhaar Reference Number</label>
+                <label className="font-semibold text-slate-700">Aadhaar Reference (Vault Encrypted)</label>
                 <input
                   type="text"
                   value="XXXX XXXX 2841"
@@ -468,16 +471,6 @@ export const ApplicationWizard: React.FC = () => {
                   ))}
                 </select>
               </div>
-
-              <div className="space-y-1">
-                <label className="font-semibold text-slate-700">PIN Code</label>
-                <input
-                  type="text"
-                  value={formData.pincode}
-                  onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-slate-300 bg-white"
-                />
-              </div>
             </div>
           </div>
         )}
@@ -486,7 +479,7 @@ export const ApplicationWizard: React.FC = () => {
         {currentStep === 2 && (
           <div className="space-y-4 text-xs">
             <h3 className="text-sm font-bold text-slate-800 border-b pb-2 uppercase tracking-wider">
-              2. Contact Information
+              2. Communication & Contact Coordinates
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
@@ -500,7 +493,7 @@ export const ApplicationWizard: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="font-semibold text-slate-700">Email Address</label>
+                <label className="font-semibold text-slate-700">Registered Email Address</label>
                 <input
                   type="email"
                   value={formData.email}
@@ -518,77 +511,202 @@ export const ApplicationWizard: React.FC = () => {
                   className="w-full p-2.5 rounded-xl border border-slate-300 bg-white"
                 />
               </div>
+
+              <div className="space-y-1">
+                <label className="font-semibold text-slate-700">PIN Code</label>
+                <input
+                  type="text"
+                  value={formData.pincode}
+                  onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-slate-300 bg-white"
+                />
+              </div>
             </div>
           </div>
         )}
 
-        {/* Step 3: Education Details (Requirement 14) */}
+        {/* Step 3: Dynamic Academic & Programme (Adapts between Domestic Ph.D and Overseas NOS) */}
         {currentStep === 3 && (
           <div className="space-y-4 text-xs">
-            <h3 className="text-sm font-bold text-slate-800 border-b pb-2 uppercase tracking-wider">
-              3. Academic Qualifications & Research Programme
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="font-semibold text-slate-700">Highest Completed Qualification</label>
-                <input
-                  type="text"
-                  value={formData.highestQualification}
-                  onChange={(e) => setFormData({ ...formData, highestQualification: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-slate-300 bg-white"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-semibold text-slate-700">Qualifying Percentage / CGPA</label>
-                <input
-                  type="text"
-                  value={formData.percentageOrCgpa}
-                  onChange={(e) => setFormData({ ...formData, percentageOrCgpa: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-slate-300 bg-white"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-semibold text-slate-700">Enrolled Institution / Department</label>
-                <input
-                  type="text"
-                  value={formData.institution}
-                  onChange={(e) => setFormData({ ...formData, institution: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-slate-300 bg-white"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-semibold text-slate-700">Course / Programme Enrolled</label>
-                <input
-                  type="text"
-                  value={formData.course}
-                  onChange={(e) => setFormData({ ...formData, course: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-slate-300 bg-white"
-                />
-              </div>
-
-              <div className="sm:col-span-2 space-y-1">
-                <label className="font-semibold text-slate-700">Approved Research Synopsis Title</label>
-                <input
-                  type="text"
-                  value={formData.researchProposalTitle}
-                  onChange={(e) => setFormData({ ...formData, researchProposalTitle: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-slate-300 bg-white"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-semibold text-slate-700">Research Supervisor</label>
-                <input
-                  type="text"
-                  value={formData.supervisorName}
-                  onChange={(e) => setFormData({ ...formData, supervisorName: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-slate-300 bg-white"
-                />
-              </div>
+            <div className="flex items-center justify-between border-b pb-2">
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
+                {activeScheme.category === 'overseas'
+                  ? '3. Foreign University & Overseas Study Details (NOS)'
+                  : '3. Academic Qualifications & Research Programme (Domestic)'}
+              </h3>
+              <span className="text-[11px] font-mono text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded font-bold">
+                Scheme: {activeScheme.code}
+              </span>
             </div>
+
+            {/* DYNAMIC OVERSEAS FIELDS (NOS) */}
+            {activeScheme.category === 'overseas' ? (
+              <div className="space-y-4">
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-blue-900 flex items-center space-x-2">
+                  <Globe2 className="w-4 h-4 text-blue-700 shrink-0" />
+                  <span>
+                    NOS supports Master's, Ph.D. and Post-Doctoral studies in <strong>Top 1000 QS Ranked</strong> foreign universities.
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="font-semibold text-slate-700">Target Destination Country</label>
+                    <select
+                      value={formData.targetCountry || 'United Kingdom'}
+                      onChange={(e) => setFormData({ ...formData, targetCountry: e.target.value })}
+                      className="w-full p-2.5 rounded-xl border border-slate-300 bg-white font-semibold"
+                    >
+                      <option value="United Kingdom">United Kingdom (UK)</option>
+                      <option value="United States">United States (USA)</option>
+                      <option value="Germany">Germany</option>
+                      <option value="Australia">Australia</option>
+                      <option value="Canada">Canada</option>
+                      <option value="Netherlands">Netherlands</option>
+                      <option value="Singapore">Singapore</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-semibold text-slate-700">Foreign University Name</label>
+                    <input
+                      type="text"
+                      value={formData.foreignUniversity || 'University of Oxford'}
+                      onChange={(e) => setFormData({ ...formData, foreignUniversity: e.target.value })}
+                      className="w-full p-2.5 rounded-xl border border-slate-300 bg-white font-semibold"
+                      placeholder="e.g. University of Oxford"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-semibold text-slate-700">QS World University Rank (2026)</label>
+                    <input
+                      type="number"
+                      value={formData.qsRanking || '3'}
+                      onChange={(e) => setFormData({ ...formData, qsRanking: e.target.value })}
+                      className="w-full p-2.5 rounded-xl border border-slate-300 bg-white font-mono font-bold"
+                      placeholder="e.g. 3 (Must be <= 1000)"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-semibold text-slate-700">Valid Indian Passport Number</label>
+                    <input
+                      type="text"
+                      value={formData.passportNumber || 'Z9482014'}
+                      onChange={(e) => setFormData({ ...formData, passportNumber: e.target.value })}
+                      className="w-full p-2.5 rounded-xl border border-slate-300 bg-white font-mono font-bold uppercase"
+                      placeholder="e.g. Z9482014"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-semibold text-slate-700">Language / Aptitude Test Score</label>
+                    <input
+                      type="text"
+                      value={formData.languageTestScore || 'IELTS 8.0 Band Overall'}
+                      onChange={(e) => setFormData({ ...formData, languageTestScore: e.target.value })}
+                      className="w-full p-2.5 rounded-xl border border-slate-300 bg-white"
+                      placeholder="e.g. IELTS 7.5 / TOEFL 105"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-semibold text-slate-700">Previous Qualifying Degree Marks (%)</label>
+                    <input
+                      type="text"
+                      value={formData.percentageOrCgpa}
+                      onChange={(e) => setFormData({ ...formData, percentageOrCgpa: e.target.value })}
+                      className="w-full p-2.5 rounded-xl border border-slate-300 bg-white font-bold font-mono"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2 space-y-1">
+                    <label className="font-semibold text-slate-700">Proposed Course & Field of Study Abroad</label>
+                    <input
+                      type="text"
+                      value={formData.course}
+                      onChange={(e) => setFormData({ ...formData, course: e.target.value })}
+                      className="w-full p-2.5 rounded-xl border border-slate-300 bg-white"
+                      placeholder="e.g. M.Sc in Biodiversity, Conservation and Management"
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* DYNAMIC DOMESTIC FIELDS (NFST / TCE-ST) */
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="font-semibold text-slate-700">Highest Completed Qualification</label>
+                  <input
+                    type="text"
+                    value={formData.highestQualification}
+                    onChange={(e) => setFormData({ ...formData, highestQualification: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-white"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-semibold text-slate-700">Qualifying Percentage / CGPA</label>
+                  <input
+                    type="text"
+                    value={formData.percentageOrCgpa}
+                    onChange={(e) => setFormData({ ...formData, percentageOrCgpa: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-white font-bold font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-semibold text-slate-700">Enrolled Indian University</label>
+                  <input
+                    type="text"
+                    value={formData.university}
+                    onChange={(e) => setFormData({ ...formData, university: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-white"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-semibold text-slate-700">Institution / Department</label>
+                  <input
+                    type="text"
+                    value={formData.institution}
+                    onChange={(e) => setFormData({ ...formData, institution: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-white"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-semibold text-slate-700">Degree Course Enrolled</label>
+                  <input
+                    type="text"
+                    value={formData.course}
+                    onChange={(e) => setFormData({ ...formData, course: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-white"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-semibold text-slate-700">Research Supervisor / Guide</label>
+                  <input
+                    type="text"
+                    value={formData.supervisorName || ''}
+                    onChange={(e) => setFormData({ ...formData, supervisorName: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-white"
+                  />
+                </div>
+
+                <div className="sm:col-span-2 space-y-1">
+                  <label className="font-semibold text-slate-700">Approved Research Synopsis Title</label>
+                  <input
+                    type="text"
+                    value={formData.researchProposalTitle || ''}
+                    onChange={(e) => setFormData({ ...formData, researchProposalTitle: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-white"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -596,28 +714,48 @@ export const ApplicationWizard: React.FC = () => {
         {currentStep === 4 && (
           <div className="space-y-4 text-xs">
             <h3 className="text-sm font-bold text-slate-800 border-b pb-2 uppercase tracking-wider">
-              4. Scheme Allocation
+              4. Scheme Allocation & Mandates
             </h3>
-            <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-300 space-y-2">
+            <div className="p-5 bg-emerald-50 rounded-2xl border border-emerald-300 space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="font-bold text-emerald-950 text-sm">{formData.schemeName}</h4>
-                <span className="font-mono font-bold text-xs bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded">
-                  {formData.schemeCode}
+                <div>
+                  <h4 className="font-bold text-emerald-950 text-base">{activeScheme.name}</h4>
+                  <p className="text-xs text-emerald-800 font-hindi">{activeScheme.hindiName}</p>
+                </div>
+                <span className="font-mono font-bold text-xs bg-emerald-200 text-emerald-900 px-3 py-1 rounded-lg">
+                  {activeScheme.code}
                 </span>
               </div>
-              <p className="text-slate-600 leading-relaxed">
-                Eligible ST students pursuing full-time Ph.D research programmes in Indian universities receive ₹37,000/mo JRF stipend + HRA + contingency.
-              </p>
+              <p className="text-slate-700 leading-relaxed">{activeScheme.description}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs border-t border-emerald-200">
+                <div>
+                  <span className="text-slate-500 block">Stipend / Support:</span>
+                  <span className="font-bold text-emerald-950">{activeScheme.stipendAmount}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block">Available Slots:</span>
+                  <span className="font-bold text-emerald-950">{activeScheme.slotsAvailable} Slots</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block">Application Deadline:</span>
+                  <span className="font-bold text-amber-800">{activeScheme.deadline}</span>
+                </div>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Step 5: Financial Details (Requirement 15) */}
+        {/* Step 5: Financial Details */}
         {currentStep === 5 && (
           <div className="space-y-4 text-xs">
-            <h3 className="text-sm font-bold text-slate-800 border-b pb-2 uppercase tracking-wider">
-              5. Annual Family Income Particulars
-            </h3>
+            <div className="flex items-center justify-between border-b pb-2">
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
+                5. Annual Family Income Particulars
+              </h3>
+              <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                Scheme Ceiling: ₹{(activeScheme.maxIncomeCeiling || 600000).toLocaleString('en-IN')} / yr
+              </span>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="font-semibold text-slate-700">Gross Annual Family Income (INR)</label>
@@ -625,7 +763,7 @@ export const ApplicationWizard: React.FC = () => {
                   type="text"
                   value={formData.annualIncome}
                   onChange={(e) => setFormData({ ...formData, annualIncome: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-slate-300 bg-white"
+                  className="w-full p-2.5 rounded-xl border border-slate-300 bg-white font-mono font-bold"
                 />
               </div>
 
@@ -638,15 +776,35 @@ export const ApplicationWizard: React.FC = () => {
                   className="w-full p-2.5 rounded-xl border border-slate-300 bg-white font-mono"
                 />
               </div>
+
+              <div className="space-y-1">
+                <label className="font-semibold text-slate-700">Issuing State / Revenue Authority</label>
+                <input
+                  type="text"
+                  value={formData.issuingState}
+                  onChange={(e) => setFormData({ ...formData, issuingState: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-slate-300 bg-white"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-semibold text-slate-700">Certificate Issue Date</label>
+                <input
+                  type="date"
+                  value={formData.issueDate}
+                  onChange={(e) => setFormData({ ...formData, issueDate: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-slate-300 bg-white"
+                />
+              </div>
             </div>
           </div>
         )}
 
-        {/* Step 6: Bank Details (Requirement 15: Mask sensitive info) */}
+        {/* Step 6: Bank Details */}
         {currentStep === 6 && (
           <div className="space-y-4 text-xs">
             <h3 className="text-sm font-bold text-slate-800 border-b pb-2 uppercase tracking-wider">
-              6. Direct Benefit Transfer (DBT) Bank Particulars
+              6. Aadhaar Linked DBT Bank Account (PFMS Gateway)
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
@@ -660,7 +818,7 @@ export const ApplicationWizard: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="font-semibold text-slate-700">Account Holder Name</label>
+                <label className="font-semibold text-slate-700">Account Holder Name (As in Bank)</label>
                 <input
                   type="text"
                   value={formData.accountHolder}
@@ -670,14 +828,13 @@ export const ApplicationWizard: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="font-semibold text-slate-700">Bank Account Number</label>
+                <label className="font-semibold text-slate-700">Account Number</label>
                 <input
                   type="text"
-                  value="XXXX XXXX 4821"
-                  disabled
-                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 font-mono text-slate-500"
+                  value={formData.accountNumber}
+                  onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-slate-300 bg-white font-mono"
                 />
-                <span className="text-[10px] text-slate-400">Masked for privacy security.</span>
               </div>
 
               <div className="space-y-1">
@@ -686,22 +843,22 @@ export const ApplicationWizard: React.FC = () => {
                   type="text"
                   value={formData.ifsc}
                   onChange={(e) => setFormData({ ...formData, ifsc: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-slate-300 bg-white font-mono"
+                  className="w-full p-2.5 rounded-xl border border-slate-300 bg-white font-mono uppercase"
                 />
               </div>
             </div>
           </div>
         )}
 
-        {/* Step 7: Documents Upload System (Requirement 16 & 17) */}
+        {/* Step 7: Dynamic Documents Checklist (Driven by activeScheme.requiredDocuments) */}
         {currentStep === 7 && (
           <div className="space-y-4 text-xs">
             <div className="flex items-center justify-between border-b pb-2">
               <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
-                7. Mandatory Document Upload & AI Verification
+                7. Required Documents Submission Checklist ({activeScheme.code})
               </h3>
-              <span className="text-[11px] text-emerald-800 font-bold">
-                Supported: PDF, JPG, PNG (up to 5 MB)
+              <span className="text-[11px] text-slate-500 font-semibold">
+                {documents.filter((d) => d.verificationStatus === 'verified').length} of {documents.length} Ready
               </span>
             </div>
 
@@ -709,60 +866,58 @@ export const ApplicationWizard: React.FC = () => {
               {documents.map((doc) => (
                 <div
                   key={doc.id}
-                  className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-white hover:border-emerald-700 transition-all"
                 >
                   <div className="flex items-start space-x-3">
-                    <div className="p-2 bg-white rounded-lg border border-slate-200 text-emerald-800 shrink-0">
+                    <div className="p-2 rounded-xl bg-white border border-slate-200 text-[#0D3829] shrink-0 mt-0.5">
                       <FileText className="w-5 h-5" />
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-slate-900">{doc.name}</h4>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-bold text-slate-900">{doc.name}</span>
                         {doc.required && (
-                          <span className="text-[9px] font-bold text-rose-700 bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200">
-                            Required
+                          <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded">
+                            MANDATORY
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-slate-500 font-mono mt-0.5">
-                        {doc.fileName || 'No file selected yet'} • {doc.fileSize || 'Pending'}
-                      </p>
+                      <div className="text-[11px] text-slate-500 font-mono mt-0.5">
+                        {doc.fileName || 'No file attached'} {doc.fileSize && `• ${doc.fileSize}`}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 ${
-                        doc.verificationStatus === 'verified'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-amber-100 text-amber-800'
-                      }`}
-                    >
-                      {doc.verificationStatus === 'verified' ? (
-                        <CheckCircle2 className="w-3 h-3" />
-                      ) : (
-                        <Sparkles className="w-3 h-3" />
-                      )}
-                      <span className="capitalize">{doc.verificationStatus}</span>
-                    </span>
+                  <div className="flex items-center space-x-2">
+                    {doc.verificationStatus === 'verified' ? (
+                      <span className="flex items-center space-x-1 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>AI Scanned ({doc.aiConfidence || 98}%)</span>
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">
+                        Pending Verification
+                      </span>
+                    )}
 
-                    {/* Actual browser file picker */}
-                    <label className="cursor-pointer px-3 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 font-semibold text-slate-700 transition-colors">
-                      <span>Replace</span>
+                    <label className="cursor-pointer px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white hover:bg-slate-100 border border-slate-300 flex items-center space-x-1 transition-colors">
+                      <Upload className="w-3.5 h-3.5 text-slate-600" />
+                      <span>{doc.fileName ? 'Replace' : 'Upload'}</span>
                       <input
                         type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) => handleFileUpload(e, doc.id)}
                         className="hidden"
+                        accept=".pdf,.png,.jpg"
+                        onChange={(e) => handleFileUpload(e, doc.id)}
                       />
                     </label>
 
                     <button
                       type="button"
                       onClick={() => setActiveAIModalDoc(doc)}
-                      className="px-3 py-1.5 rounded-lg bg-[#0D3829] hover:bg-[#16533D] font-bold text-white transition-colors"
+                      className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-300 flex items-center space-x-1 transition-colors"
+                      title="Inspect with AI Document Intelligence"
                     >
-                      AI Verify
+                      <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                      <span>AI Scan</span>
                     </button>
                   </div>
                 </div>
@@ -775,24 +930,55 @@ export const ApplicationWizard: React.FC = () => {
         {currentStep === 8 && (
           <div className="space-y-4 text-xs">
             <h3 className="text-sm font-bold text-slate-800 border-b pb-2 uppercase tracking-wider">
-              8. Complete Application Summary Review
+              8. Complete Application Summary & Verification
             </h3>
-            <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-5 rounded-2xl border border-slate-200">
               <div>
-                <span className="text-slate-500">Applicant Full Name</span>
-                <div className="font-bold text-slate-900 mt-0.5">{formData.fullName}</div>
+                <span className="text-slate-500">Target Scheme:</span>
+                <div className="font-bold text-slate-900 text-sm">{activeScheme.name} ({activeScheme.code})</div>
               </div>
               <div>
-                <span className="text-slate-500">Social Category & Tribe</span>
-                <div className="font-bold text-slate-900 mt-0.5">{formData.tribeCommunity} (ST)</div>
+                <span className="text-slate-500">Applicant Name:</span>
+                <div className="font-bold text-slate-900">{formData.fullName} (ST - {formData.tribeCommunity})</div>
+              </div>
+              {activeScheme.category === 'overseas' ? (
+                <>
+                  <div>
+                    <span className="text-slate-500">Target Country & University:</span>
+                    <div className="font-bold text-slate-900">{formData.foreignUniversity} ({formData.targetCountry})</div>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">QS World University Rank:</span>
+                    <div className="font-bold text-emerald-800 font-mono">#{formData.qsRanking}</div>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Passport Number:</span>
+                    <div className="font-bold text-slate-900 font-mono">{formData.passportNumber}</div>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Standardized Test:</span>
+                    <div className="font-bold text-slate-900">{formData.languageTestScore}</div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <span className="text-slate-500">Enrolled Institution:</span>
+                    <div className="font-bold text-slate-900">{formData.institution || formData.university}</div>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Programme & Synopsis:</span>
+                    <div className="font-bold text-slate-900">{formData.course} - {formData.researchProposalTitle}</div>
+                  </div>
+                </>
+              )}
+              <div>
+                <span className="text-slate-500">Declared Family Income:</span>
+                <div className="font-bold text-slate-900 font-mono">₹{parseInt(formData.annualIncome).toLocaleString('en-IN')} / yr</div>
               </div>
               <div>
-                <span className="text-slate-500">Institution & Course</span>
-                <div className="font-bold text-slate-900 mt-0.5">{formData.course} ({formData.institution})</div>
-              </div>
-              <div>
-                <span className="text-slate-500">Direct Bank Account</span>
-                <div className="font-bold text-slate-900 mt-0.5 font-mono">{formData.bankName} (****4821)</div>
+                <span className="text-slate-500">DBT Bank Account:</span>
+                <div className="font-bold text-slate-900 font-mono">{formData.bankName} (****{formData.accountNumber.slice(-4)})</div>
               </div>
             </div>
           </div>
@@ -806,7 +992,7 @@ export const ApplicationWizard: React.FC = () => {
             </h3>
             <div className="p-4 bg-amber-50 rounded-2xl border border-amber-300 space-y-3">
               <p className="text-slate-700 leading-relaxed">
-                I hereby solemnly declare that all particulars stated in this application are true, correct, and complete to the best of my knowledge. I understand that any false declaration or forged document shall render me liable for immediate cancellation of fellowship and legal action under statutory laws.
+                I hereby solemnly declare that all particulars stated in this application under <strong>{activeScheme.name}</strong> are true, correct, and complete to the best of my knowledge. I understand that any false declaration or forged document shall render me liable for immediate cancellation of fellowship and legal action under statutory laws.
               </p>
               <label className="flex items-start space-x-2.5 cursor-pointer font-bold text-slate-900 pt-2 border-t border-amber-200">
                 <input
@@ -828,9 +1014,11 @@ export const ApplicationWizard: React.FC = () => {
               <CheckCircle2 className="w-8 h-8" />
             </div>
             <div className="space-y-1">
-              <h3 className="text-base font-bold text-slate-900">Ready for Official Transmission</h3>
+              <h3 className="text-base font-bold text-slate-900">
+                Ready for Official Submission ({activeScheme.code})
+              </h3>
               <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-                Upon clicking Submit, an official reference tracking ID will be generated and your application will be routed to the Ministry Officer queue.
+                Upon clicking Submit, an official reference tracking ID will be generated and your application will be routed to the Ministry Officer scrutiny queue.
               </p>
             </div>
             <button
@@ -871,6 +1059,8 @@ export const ApplicationWizard: React.FC = () => {
         isOpen={!!activeAIModalDoc}
         onClose={() => setActiveAIModalDoc(null)}
         document={activeAIModalDoc}
+        applicantFormData={formData}
+        activeScheme={activeScheme}
         onVerificationComplete={(res) => {
           if (activeAIModalDoc) {
             setDocuments((prev) =>
