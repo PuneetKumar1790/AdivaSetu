@@ -24,11 +24,9 @@ export interface PaginatedResponse<T> {
 
 export const applicationService = {
   /**
-   * Fetch applications with simulated server-side pagination, search & filters
+   * Fetch applications with real backend API + local fallback
    */
   async getApplications(params: ApplicationQueryParams = {}): Promise<PaginatedResponse<Application>> {
-    await apiConfig.simulateLatency('applications', 'Fetching application registry...');
-
     const {
       page = 1,
       pageSize = 10,
@@ -40,9 +38,35 @@ export const applicationService = {
       sortOrder = 'desc',
     } = params;
 
+    // 1. Try real backend API first
+    try {
+      const query = new URLSearchParams({
+        page: String(page),
+        pageSize: String(pageSize),
+        search,
+        scheme,
+        status,
+        state,
+        sortBy,
+        sortOrder,
+      });
+
+      const res = await fetch(`/api/applications?${query.toString()}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json && Array.isArray(json.data) && json.data.length > 0) {
+          return json;
+        }
+      }
+    } catch {
+      // Backend not reached, fall back to browserDb
+    }
+
+    // 2. Fallback to browserDb
+    await apiConfig.simulateLatency('applications', 'Fetching application registry...');
+
     let list = browserDb.getApplications();
 
-    // 1. Search Filter
     if (search.trim()) {
       const q = search.toLowerCase().trim();
       list = list.filter(
@@ -54,22 +78,18 @@ export const applicationService = {
       );
     }
 
-    // 2. Scheme Filter
     if (scheme && scheme !== 'all') {
       list = list.filter((a) => a.schemeCode.toUpperCase() === scheme.toUpperCase());
     }
 
-    // 3. Status Filter
     if (status && status !== 'all') {
       list = list.filter((a) => a.status.toLowerCase() === status.toLowerCase());
     }
 
-    // 4. State Filter
     if (state && state !== 'all') {
       list = list.filter((a) => a.state.toLowerCase() === state.toLowerCase());
     }
 
-    // 5. Sorting
     list.sort((a, b) => {
       let valA: any = a[sortBy] ?? '';
       let valB: any = b[sortBy] ?? '';
@@ -103,6 +123,13 @@ export const applicationService = {
    * Fetch single application by ID
    */
   async getApplicationById(id: string): Promise<Application | null> {
+    try {
+      const res = await fetch(`/api/applications/${id}`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {}
+
     await apiConfig.simulateLatency('singleApplication', `Retrieving application ${id}...`);
     const app = browserDb.findApplicationById(id);
     return app || null;
@@ -112,6 +139,21 @@ export const applicationService = {
    * Submit / create a new application
    */
   async submitApplication(payload: Partial<Application>): Promise<Application> {
+    try {
+      const res = await fetch('/api/applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        const saved = await res.json();
+        browserDb.upsertApplication(saved);
+        eventBus.publish('application:created', saved);
+        eventBus.publish('application:status_changed', { application: saved, status: 'Submitted' });
+        return saved;
+      }
+    } catch {}
+
     await apiConfig.simulateLatency('mutation', 'Submitting application to Ministry Gateway...');
 
     const schemeCode = payload.schemeCode || 'NFST';
@@ -162,10 +204,9 @@ export const applicationService = {
 
     browserDb.upsertApplication(newApp);
 
-    // Add notification
     browserDb.addNotification({
       title: 'Application Submitted Successfully',
-      message: `Your application ${newId} has been acknowledged. Ingestion into automated AI scrutiny queue is underway.`,
+      message: `Your application ${newId} has been acknowledged. Ingestion into scrutiny queue is underway.`,
       type: 'info',
       applicationId: newId,
       actionUrl: `/applicant/applications/${newId}`,
@@ -187,6 +228,20 @@ export const applicationService = {
     actor: string,
     remarks?: string
   ): Promise<Application | null> {
+    try {
+      const res = await fetch(`/api/applications/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus, actor, remarks }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        browserDb.upsertApplication(updated);
+        eventBus.publish('application:status_changed', { application: updated, status: newStatus });
+        return updated;
+      }
+    } catch {}
+
     await apiConfig.simulateLatency('mutation', `Recording status transition to ${newStatus}...`);
 
     const app = browserDb.findApplicationById(id);
@@ -196,7 +251,6 @@ export const applicationService = {
     app.updatedAt = new Date().toISOString();
     if (remarks) app.remarks = remarks;
 
-    // Append audit log
     const auditEvent: AuditEvent = {
       id: `aud-${Date.now()}`,
       applicationId: id,
@@ -214,32 +268,8 @@ export const applicationService = {
     };
     app.auditTrail.unshift(auditEvent);
 
-    // Update workflow timeline
-    if (newStatus === 'Scrutiny' || newStatus === 'Resubmitted') {
-      app.timeline.forEach((t) => {
-        if (t.name.includes('Scrutiny') || t.hindiName.includes('जांच')) {
-          t.status = 'in_progress';
-          t.date = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-        }
-      });
-    } else if (newStatus === 'Screening' || newStatus === 'Shortlisted') {
-      app.timeline.forEach((t) => {
-        if (t.name.includes('Scrutiny') || t.hindiName.includes('जांच')) t.status = 'completed';
-        if (t.name.includes('Screening') || t.hindiName.includes('चयन')) {
-          t.status = 'completed';
-          t.date = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-        }
-      });
-    } else if (newStatus === 'Selected' || newStatus === 'Approved') {
-      app.timeline.forEach((t) => {
-        t.status = 'completed';
-        if (!t.date) t.date = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-      });
-    }
-
     browserDb.upsertApplication(app);
 
-    // Push notification to applicant
     let notifTitle = `Application Status: ${newStatus}`;
     let notifType: 'info' | 'success' | 'warning' | 'celebration' = 'info';
     let notifMsg = `Your application ${app.id} for ${app.schemeName} has been moved to ${newStatus}.`;
@@ -273,7 +303,7 @@ export const applicationService = {
   },
 
   /**
-   * Resolve deficiency in an application (The key hackathon demo step)
+   * Resolve deficiency in an application
    */
   async resolveDeficiency(
     applicationId: string,
@@ -282,12 +312,26 @@ export const applicationService = {
     fileName: string,
     fileSize: string
   ): Promise<Application | null> {
+    try {
+      const res = await fetch(`/api/applications/${applicationId}/deficiency`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ documentType, fileUrl, fileName, fileSize }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        browserDb.upsertApplication(updated);
+        eventBus.publish('application:deficiency_resolved', { applicationId, documentType });
+        eventBus.publish('application:status_changed', { application: updated, status: 'Scrutiny' });
+        return updated;
+      }
+    } catch {}
+
     await apiConfig.simulateLatency('mutation', 'Resolving deficiency and synchronizing documents...');
 
     const app = browserDb.findApplicationById(applicationId);
     if (!app) return null;
 
-    // 1. Mark deficiency resolved
     if (app.deficiencies) {
       app.deficiencies = app.deficiencies.map((d) =>
         d.documentType === documentType
@@ -302,7 +346,6 @@ export const applicationService = {
       );
     }
 
-    // 2. Update documents collection
     if (app.documents) {
       const docIdx = app.documents.findIndex((d) => d.type === documentType);
       if (docIdx !== -1) {
@@ -315,12 +358,10 @@ export const applicationService = {
       }
     }
 
-    // 3. Move application status to Scrutiny / Resubmitted
     app.status = 'Scrutiny';
     app.verifiedDocumentsCount = (app.verifiedDocumentsCount || 0) + 1;
     app.updatedAt = new Date().toISOString();
 
-    // 4. Append audit event
     app.auditTrail.unshift({
       id: `aud-${Date.now()}`,
       applicationId: app.id,
@@ -332,20 +373,8 @@ export const applicationService = {
       statusType: 'success',
     });
 
-    app.auditTrail.unshift({
-      id: `aud-${Date.now() + 1}`,
-      applicationId: app.id,
-      timestamp: new Date().toISOString(),
-      actor: 'AI Scrutiny Engine (v2.4)',
-      actorRole: 'ai',
-      action: 'AUTOMATED_DOCUMENT_VERIFIED',
-      description: `OCR extraction verified valid financial year 2026-27. Confidence 98.4%. Recommended for Officer Scrutiny.`,
-      statusType: 'success',
-    });
-
     browserDb.upsertApplication(app);
 
-    // Notification
     browserDb.addNotification({
       title: 'Deficiency Resolved',
       message: `Your replacement document for ${app.id} was verified successfully by AI. Re-scrutiny in progress.`,

@@ -1,9 +1,19 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { AshokaEmblem } from './AshokaEmblem';
-import { SyncIndicator } from './SyncIndicator';
+import React, { useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LogIn, LogOut, User as UserIcon, Shield, Sparkles, Video } from 'lucide-react';
+import {
+  Compass,
+  FileCheck2,
+  Award,
+  Sparkles,
+  LogIn,
+  LogOut,
+  ChevronDown,
+  Layers,
+  Shield,
+  Activity,
+  User as UserIcon,
+} from 'lucide-react';
 
 interface GovHeaderProps {
   onOpenRecorder?: () => void;
@@ -13,108 +23,191 @@ interface GovHeaderProps {
 export const GovHeader: React.FC<GovHeaderProps> = ({ onOpenRecorder, onOpenDemoControls }) => {
   const { user, isAuthenticated, role, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+
+  const isActive = (path: string) => location.pathname.startsWith(path);
 
   return (
-    <div className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
+    <header className="bg-white/95 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40 transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
-          {/* Left: Ministry Branding & Logo */}
-          <div className="flex items-center space-x-4">
-            <Link to="/" className="flex items-center space-x-3.5 group">
-              <AshokaEmblem size={44} className="text-slate-800 group-hover:text-emerald-800 transition-colors" />
-              <div className="border-l border-slate-300 pl-3.5">
-                <div className="flex items-center space-x-2">
-                  <span className="text-xl sm:text-2xl font-black tracking-tight text-[#0D3829]">
+        <div className="flex items-center justify-between h-16">
+          {/* Brand Logo */}
+          <div className="flex items-center space-x-8">
+            <Link to="/" className="flex items-center space-x-3 group">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-800 to-teal-600 flex items-center justify-center text-white shadow-sm shadow-emerald-900/20 group-hover:scale-105 transition-transform">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <div>
+                <div className="flex items-center space-x-1.5">
+                  <span className="text-lg font-extrabold tracking-tight text-slate-900">
                     AdivaSetu
                   </span>
-                  <span className="text-base sm:text-lg font-bold text-amber-700 font-hindi">
-                    अदिवा सेतु
+                  <span className="text-[10px] uppercase font-bold tracking-widest bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-200/60">
+                    Portal
                   </span>
                 </div>
-                <div className="text-[11px] font-medium text-slate-500 tracking-wide flex items-center gap-1.5">
-                  <span>Ministry of Tribal Affairs</span>
-                  <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                  <span className="text-slate-400">Govt. of India</span>
+                <div className="text-[10px] text-slate-500 font-medium">
+                  National Tribal Fellowship & Scholarship Gateway
                 </div>
               </div>
             </Link>
+
+            {/* Primary Nav Links */}
+            <nav className="hidden md:flex items-center space-x-1 text-xs font-semibold text-slate-600">
+              <Link
+                to="/applicant/schemes"
+                className={`px-3 py-2 rounded-lg transition-colors ${
+                  isActive('/applicant/schemes')
+                    ? 'text-emerald-700 bg-emerald-50/80'
+                    : 'hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                Schemes
+              </Link>
+              <Link
+                to="/applicant/eligibility"
+                className={`px-3 py-2 rounded-lg transition-colors ${
+                  isActive('/applicant/eligibility')
+                    ? 'text-emerald-700 bg-emerald-50/80'
+                    : 'hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                Eligibility Engine
+              </Link>
+              <Link
+                to="/applicant/applications"
+                className={`px-3 py-2 rounded-lg transition-colors ${
+                  isActive('/applicant/applications')
+                    ? 'text-emerald-700 bg-emerald-50/80'
+                    : 'hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                Applications
+              </Link>
+              <Link
+                to="/applicant/fellowship"
+                className={`px-3 py-2 rounded-lg transition-colors ${
+                  isActive('/applicant/fellowship')
+                    ? 'text-emerald-700 bg-emerald-50/80'
+                    : 'hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                DBT & Sanctions
+              </Link>
+              {role === 'officer' && (
+                <Link
+                  to="/admin/dashboard"
+                  className={`px-3 py-2 rounded-lg transition-colors ${
+                    isActive('/admin')
+                      ? 'text-emerald-800 bg-emerald-100/70 font-bold'
+                      : 'text-amber-800 hover:bg-amber-50'
+                  }`}
+                >
+                  Officer Console
+                </Link>
+              )}
+            </nav>
           </div>
 
-          {/* Right Action Controls */}
-          <div className="flex items-center space-x-2 sm:space-x-3">
-            {/* Live Gateway Sync Indicator */}
-            <div className="hidden lg:block">
-              <SyncIndicator showLiveStream={isAuthenticated} />
+          {/* Right Header Controls */}
+          <div className="flex items-center space-x-3">
+            {/* Live System API status chip */}
+            <div className="hidden lg:flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-[11px] font-medium">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Backend Connected</span>
             </div>
 
-            {/* Built-in Screen Recorder Button */}
-            {onOpenRecorder && (
-              <button
-                onClick={onOpenRecorder}
-                className="hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition-all shadow-2xs"
-                title="Record Demo Video"
-              >
-                <span className="w-2 h-2 rounded-full bg-rose-600 animate-pulse"></span>
-                <Video className="w-3.5 h-3.5" />
-                <span>Demo Recorder</span>
-              </button>
-            )}
-
-            {/* Quick Demo Controls launcher */}
-            {onOpenDemoControls && (
-              <button
-                onClick={onOpenDemoControls}
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100 transition-all shadow-2xs cursor-pointer"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                <span>Demo Tour</span>
-              </button>
-            )}
-
             {isAuthenticated ? (
-              <div className="flex items-center space-x-3 pl-2 border-l border-slate-200">
-                <Link
-                  to={role === 'officer' ? '/admin/dashboard' : '/applicant/dashboard'}
-                  className="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-100 text-left transition-colors"
+              <div className="relative">
+                <button
+                  onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                  className="flex items-center space-x-2 p-1.5 pr-2.5 rounded-full hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
                 >
                   <img
-                    src={user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}
+                    src={user?.avatar || '/aarav.jpg'}
                     alt={user?.name}
-                    className="w-8 h-8 rounded-full border border-emerald-800 object-cover"
+                    className="w-7 h-7 rounded-full object-cover border border-emerald-600"
                   />
-                  <div className="hidden lg:block">
-                    <p className="text-xs font-bold text-slate-800 leading-none">{user?.name}</p>
-                    <span className="text-[10px] text-emerald-800 font-semibold uppercase tracking-wider">
-                      {role === 'officer' ? 'Ministry Officer' : 'ST Applicant'}
-                    </span>
-                  </div>
-                </Link>
-
-                <button
-                  onClick={() => {
-                    logout();
-                    navigate('/login');
-                  }}
-                  className="p-2 text-slate-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors"
-                  title="Logout"
-                >
-                  <LogOut className="w-4 h-4" />
+                  <span className="text-xs font-semibold text-slate-800 hidden sm:inline">
+                    {user?.name?.split(' ')[0]}
+                  </span>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
                 </button>
+
+                {profileDropdownOpen && (
+                  <div
+                    className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-1.5 text-xs z-50 animate-in fade-in slide-in-from-top-2 duration-150"
+                    onMouseLeave={() => setProfileDropdownOpen(false)}
+                  >
+                    <div className="px-3.5 py-2.5 border-b border-slate-100">
+                      <p className="font-bold text-slate-900">{user?.name}</p>
+                      <p className="text-[11px] text-slate-500 truncate">{user?.email}</p>
+                      <span className="inline-block mt-1 text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 uppercase">
+                        {role === 'officer' ? 'Ministry Officer' : 'Scholar'}
+                      </span>
+                    </div>
+
+                    <div className="py-1">
+                      <Link
+                        to={role === 'officer' ? '/admin/dashboard' : '/applicant/dashboard'}
+                        className="block px-3.5 py-2 hover:bg-slate-50 text-slate-700 font-medium"
+                        onClick={() => setProfileDropdownOpen(false)}
+                      >
+                        Dashboard
+                      </Link>
+                      <Link
+                        to="/applicant/profile"
+                        className="block px-3.5 py-2 hover:bg-slate-50 text-slate-700 font-medium"
+                        onClick={() => setProfileDropdownOpen(false)}
+                      >
+                        Profile Settings
+                      </Link>
+                      <Link
+                        to="/applicant/notifications"
+                        className="block px-3.5 py-2 hover:bg-slate-50 text-slate-700 font-medium"
+                        onClick={() => setProfileDropdownOpen(false)}
+                      >
+                        Notifications
+                      </Link>
+                    </div>
+
+                    <div className="border-t border-slate-100 pt-1">
+                      <button
+                        onClick={() => {
+                          logout();
+                          navigate('/login');
+                        }}
+                        className="w-full text-left px-3.5 py-2 text-rose-600 hover:bg-rose-50 font-medium flex items-center space-x-1.5"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex items-center space-x-2">
                 <Link
                   to="/login"
-                  className="flex items-center space-x-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[#0D3829] text-white hover:bg-[#16533D] transition-colors shadow-2xs"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors"
                 >
-                  <LogIn className="w-3.5 h-3.5" />
-                  <span>Portal Login</span>
+                  Sign In
+                </Link>
+                <Link
+                  to="/applicant/schemes"
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-[#0F172A] hover:bg-slate-800 text-white transition-all shadow-xs"
+                >
+                  Apply Now
                 </Link>
               </div>
             )}
           </div>
         </div>
       </div>
-    </div>
+    </header>
   );
 };

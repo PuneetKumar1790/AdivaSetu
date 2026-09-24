@@ -13,9 +13,27 @@ export interface AuditQueryParams {
 
 export const auditService = {
   async getAuditLogs(params: AuditQueryParams = {}): Promise<PaginatedResponse<AuditEvent>> {
-    await apiConfig.simulateLatency('analytics', 'Loading immutable audit security ledger...');
-
     const { page = 1, pageSize = 15, search = '', actorRole = 'all', applicationId } = params;
+
+    try {
+      const q = new URLSearchParams({
+        page: String(page),
+        pageSize: String(pageSize),
+        search,
+        actorRole,
+      });
+      if (applicationId) q.append('applicationId', applicationId);
+
+      const res = await fetch(`/api/audit-logs?${q.toString()}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json && Array.isArray(json.data) && json.data.length > 0) {
+          return json;
+        }
+      }
+    } catch {}
+
+    await apiConfig.simulateLatency('analytics', 'Loading immutable audit security ledger...');
 
     let list = browserDb.getAuditEvents();
 

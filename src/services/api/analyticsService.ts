@@ -10,19 +10,27 @@ export interface DashboardStats {
   totalFundsDisbursedCr: number;
   aiVerificationPassRate: number;
   averageProcessingDays: number;
-  schemeBreakdown: Record<string, number>;
-  statusDistribution: Record<string, number>;
+  schemeBreakdown?: Record<string, number>;
+  statusDistribution?: Record<string, number>;
   lastSyncedAt: string;
 }
 
 export const analyticsService = {
   async getDashboardStats(): Promise<DashboardStats> {
+    try {
+      const res = await fetch('/api/analytics/stats');
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.totalApplications !== undefined) return data;
+      }
+    } catch {}
+
     await apiConfig.simulateLatency('analytics', 'Aggregating national scholarship analytics...');
 
     const apps = browserDb.getApplications();
 
     const stats: DashboardStats = {
-      totalApplications: apps.length > 20 ? 1248 : apps.length, // Enterprise presentation scaled KPI
+      totalApplications: apps.length > 20 ? 1248 : apps.length,
       underScrutiny: apps.filter((a) => a.status === 'Scrutiny' || a.status === 'Submitted' || a.status === 'Resubmitted').length,
       deficienciesPending: apps.filter((a) => a.status === 'Deficient').length,
       approvedCount: apps.filter((a) => a.status === 'Approved' || a.status === 'Selected').length,
