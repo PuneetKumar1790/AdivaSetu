@@ -9,6 +9,7 @@ import auditRouter from './routes/audit';
 import notificationsRouter from './routes/notifications';
 import authRouter from './routes/auth';
 import seedRouter from './routes/seed';
+import documentsRouter from './routes/documents';
 
 dotenv.config();
 
@@ -16,7 +17,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '20mb' }));
 
 // API Routes
 app.use('/api/applications', applicationsRouter);
@@ -25,6 +26,7 @@ app.use('/api/audit-logs', auditRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/seed', seedRouter);
+app.use('/api/documents', documentsRouter);
 
 app.get('/api/health', (_req: Request, res: Response) => {
   res.json({
