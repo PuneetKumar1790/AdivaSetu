@@ -8,6 +8,7 @@
     "server": "tsx server/index.ts",
     "start": "tsx server/index.ts",
     "test:backend": "tsx test_e2e_backend.ts",
+    "test:upload": "tsx test_document_upload_e2e.ts",
     "build": "tsc -b && vite build",
     "lint": "tsc -b",
     "preview": "vite preview"
