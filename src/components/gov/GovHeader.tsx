@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { AdivaSetuLogo } from '../common/AdivaSetuLogo';
 import {
   Compass,
   FileCheck2,
@@ -34,25 +35,8 @@ export const GovHeader: React.FC<GovHeaderProps> = ({ onOpenRecorder, onOpenDemo
         <div className="flex items-center justify-between h-16">
           {/* Brand Logo */}
           <div className="flex items-center space-x-8">
-            <Link to="/" className="flex items-center space-x-3 group">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-800 to-teal-600 flex items-center justify-center text-white shadow-sm shadow-emerald-900/20 group-hover:scale-105 transition-transform">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <div>
-                <div className="flex items-center space-x-1.5">
-                  <span className="text-lg font-extrabold tracking-tight text-slate-900">
-                    AdivaSetu
-                  </span>
-                  <span className="text-[10px] uppercase font-bold tracking-widest bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-200/60">
-                    Portal
-                  </span>
-                </div>
-                <div className="text-[10px] text-slate-500 font-medium">
-                  National Tribal Fellowship & Scholarship Gateway
-                </div>
-              </div>
+            <Link to="/" className="group flex items-center">
+              <AdivaSetuLogo size="sm" subtitle={true} />
             </Link>
 
             {/* Primary Nav Links */}

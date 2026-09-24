@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { AshokaEmblem } from '../../components/gov/AshokaEmblem';
+import { AdivaSetuLogo } from '../../components/common/AdivaSetuLogo';
 import { User, Shield, KeyRound, Smartphone, Mail, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
 import { INITIAL_APPLICANTS } from '../../data/initialApplicants';
 
@@ -41,20 +41,14 @@ export const LoginPage: React.FC = () => {
   return (
     <div className="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-slate-100">
       <div className="max-w-md w-full space-y-6">
-        {/* Gov Identity Header */}
-        <div className="text-center space-y-2">
-          <AshokaEmblem size={52} className="mx-auto text-slate-800" />
-          <div>
-            <h2 className="text-2xl font-black text-[#0D3829] tracking-tight">
-              AdivaSetu <span className="text-amber-700 font-hindi">अदिवा सेतु</span>
-            </h2>
-            <p className="text-xs font-semibold text-slate-600 mt-0.5">
-              Digital Scholarship & Fellowship Management Platform
-            </p>
-            <div className="text-[11px] text-slate-400 mt-0.5">
-              Ministry of Tribal Affairs • Government of India
-            </div>
+        {/* Brand Header */}
+        <div className="text-center space-y-3">
+          <div className="flex justify-center">
+            <AdivaSetuLogo size="lg" subtitle={true} className="justify-center" />
           </div>
+          <p className="text-xs text-slate-500 max-w-xs mx-auto">
+            Authorized portal for scholars, institutions, and ministry scrutiny officers.
+          </p>
         </div>
 
         {/* Login Card */}

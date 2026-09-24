@@ -1,6 +1,7 @@
 import React from 'react';
 import { ShieldCheck, ExternalLink, Activity, HeartHandshake } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { AdivaSetuLogo } from '../common/AdivaSetuLogo';
 
 export const GovFooter: React.FC = () => {
   return (
@@ -9,17 +10,9 @@ export const GovFooter: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-10 pb-12 border-b border-slate-800/80">
           {/* Brand & Mission */}
           <div className="md:col-span-2 space-y-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <div>
-                <span className="text-base font-bold text-white tracking-tight">AdivaSetu</span>
-                <span className="block text-[10px] text-slate-400">National Tribal Scholarship & Fellowship Portal</span>
-              </div>
-            </div>
+            <Link to="/" className="inline-block">
+              <AdivaSetuLogo size="sm" light={true} subtitle={true} />
+            </Link>
 
             <p className="text-slate-400 text-xs leading-relaxed max-w-sm">
               Empowering Scheduled Tribe researchers and scholars across 20 priority states through transparent AI-assisted document scrutiny, merit ranking, and direct benefit disbursement.
