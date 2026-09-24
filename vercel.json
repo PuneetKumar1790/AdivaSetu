@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api"
+      "destination": "https://adivasetu-api.onrender.com/api/$1"
     },
     {
       "source": "/(.*)",
