@@ -1,11 +1,11 @@
 import { NotificationItem } from '../../types';
 import { browserDb } from '../db/browserDb';
-import { apiConfig } from './apiConfig';
+import { apiConfig, getApiUrl } from './apiConfig';
 
 export const notificationService = {
   async getNotifications(): Promise<NotificationItem[]> {
     try {
-      const res = await fetch('/api/notifications');
+      const res = await fetch(getApiUrl('/api/notifications'));
       if (res.ok) {
         const list = await res.json();
         if (Array.isArray(list) && list.length > 0) return list;
@@ -18,7 +18,7 @@ export const notificationService = {
 
   async markAsRead(id: string): Promise<void> {
     try {
-      await fetch(`/api/notifications/${id}/read`, { method: 'PATCH' });
+      await fetch(getApiUrl(`/api/notifications/${id}/read`), { method: 'PATCH' });
     } catch {}
     browserDb.markNotificationAsRead(id);
   },

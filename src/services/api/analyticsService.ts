@@ -1,5 +1,5 @@
 import { browserDb } from '../db/browserDb';
-import { apiConfig } from './apiConfig';
+import { apiConfig, getApiUrl } from './apiConfig';
 
 export interface DashboardStats {
   totalApplications: number;
@@ -18,7 +18,7 @@ export interface DashboardStats {
 export const analyticsService = {
   async getDashboardStats(): Promise<DashboardStats> {
     try {
-      const res = await fetch('/api/analytics/stats');
+      const res = await fetch(getApiUrl('/api/analytics/stats'));
       if (res.ok) {
         const data = await res.json();
         if (data && data.totalApplications !== undefined) return data;

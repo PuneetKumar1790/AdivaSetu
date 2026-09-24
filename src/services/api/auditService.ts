@@ -1,6 +1,6 @@
 import { AuditEvent } from '../../types';
 import { browserDb } from '../db/browserDb';
-import { apiConfig } from './apiConfig';
+import { apiConfig, getApiUrl } from './apiConfig';
 import { PaginatedResponse } from './applicationService';
 
 export interface AuditQueryParams {
@@ -24,7 +24,7 @@ export const auditService = {
       });
       if (applicationId) q.append('applicationId', applicationId);
 
-      const res = await fetch(`/api/audit-logs?${q.toString()}`);
+      const res = await fetch(getApiUrl(`/api/audit-logs?${q.toString()}`));
       if (res.ok) {
         const json = await res.json();
         if (json && Array.isArray(json.data) && json.data.length > 0) {

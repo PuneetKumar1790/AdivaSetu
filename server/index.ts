@@ -28,6 +28,16 @@ app.use('/api/auth', authRouter);
 app.use('/api/seed', seedRouter);
 app.use('/api/documents', documentsRouter);
 
+app.get('/', (_req: Request, res: Response) => {
+  res.json({
+    status: 'online',
+    timestamp: new Date().toISOString(),
+    service: 'AdivaSetu Core Backend API (Render)',
+    health: '/api/health',
+    database: process.env.MONGODB_URI ? 'connected' : 'unconfigured',
+  });
+});
+
 app.get('/api/health', (_req: Request, res: Response) => {
   res.json({
     status: 'online',

@@ -82,10 +82,17 @@ router.post('/', async (req: Request, res: Response) => {
     const schemeCode = payload.schemeCode || 'NFST';
     const randomSuffix = Math.floor(10000 + Math.random() * 90000);
     const newId = payload.id || `ADVS-${schemeCode.toUpperCase()}-2026-${randomSuffix}`;
+    const schemeId = payload.schemeId || `scheme-${schemeCode.toLowerCase()}`;
+    const schemeName = payload.schemeName || `${schemeCode} Fellowship Scheme`;
 
     const newApp = new ApplicationModel({
       ...payload,
       id: newId,
+      schemeId,
+      schemeName,
+      applicantId: payload.applicantId || `usr-${Date.now()}`,
+      applicantName: payload.applicantName || 'Scholar Applicant',
+      state: payload.state || 'Jharkhand',
       status: 'Submitted',
       submittedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

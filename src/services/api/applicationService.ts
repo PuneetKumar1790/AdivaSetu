@@ -1,7 +1,7 @@
 import { Application, ApplicationStatus, AuditEvent, DeficiencyItem, DocumentItem } from '../../types';
 import { browserDb } from '../db/browserDb';
 import { eventBus } from '../events/eventBus';
-import { apiConfig } from './apiConfig';
+import { apiConfig, getApiUrl } from './apiConfig';
 
 export interface ApplicationQueryParams {
   page?: number;
@@ -51,7 +51,7 @@ export const applicationService = {
         sortOrder,
       });
 
-      const res = await fetch(`/api/applications?${query.toString()}`);
+      const res = await fetch(getApiUrl(`/api/applications?${query.toString()}`));
       if (res.ok) {
         const json = await res.json();
         if (json && Array.isArray(json.data) && json.data.length > 0) {
@@ -124,7 +124,7 @@ export const applicationService = {
    */
   async getApplicationById(id: string): Promise<Application | null> {
     try {
-      const res = await fetch(`/api/applications/${id}`);
+      const res = await fetch(getApiUrl(`/api/applications/${id}`));
       if (res.ok) {
         return await res.json();
       }
@@ -140,7 +140,7 @@ export const applicationService = {
    */
   async submitApplication(payload: Partial<Application>): Promise<Application> {
     try {
-      const res = await fetch('/api/applications', {
+      const res = await fetch(getApiUrl('/api/applications'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -229,7 +229,7 @@ export const applicationService = {
     remarks?: string
   ): Promise<Application | null> {
     try {
-      const res = await fetch(`/api/applications/${id}/status`, {
+      const res = await fetch(getApiUrl(`/api/applications/${id}/status`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus, actor, remarks }),
@@ -313,7 +313,7 @@ export const applicationService = {
     fileSize: string
   ): Promise<Application | null> {
     try {
-      const res = await fetch(`/api/applications/${applicationId}/deficiency`, {
+      const res = await fetch(getApiUrl(`/api/applications/${applicationId}/deficiency`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ documentType, fileUrl, fileName, fileSize }),
