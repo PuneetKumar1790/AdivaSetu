@@ -233,6 +233,26 @@ export const ApplicationProvider: React.FC<{ children: ReactNode }> = ({ childre
     };
   }, []);
 
+  // Initial synchronization with live backend API (Render + MongoDB Atlas)
+  useEffect(() => {
+    let active = true;
+    applicationService
+      .getApplications({ page: 1, pageSize: 100 })
+      .then((res) => {
+        if (active && res && Array.isArray(res.data) && res.data.length > 0) {
+          res.data.forEach((app) => browserDb.upsertApplication(app));
+          setApplications(browserDb.getApplications());
+        }
+      })
+      .catch(() => {
+        // Graceful offline fallback
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   return (
     <ApplicationContext.Provider
       value={{
