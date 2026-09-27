@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { INITIAL_SCHEMES } from '../../data/schemesData';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import {
   Sparkles,
   ArrowRight,
@@ -28,6 +29,7 @@ export const LandingPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const { loginAsApplicant } = useAuth();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
 
   const filteredSchemes = INITIAL_SCHEMES.filter((s) => {
@@ -56,15 +58,15 @@ export const LandingPage: React.FC = () => {
           <div className="lg:col-span-7 space-y-6">
             <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold tracking-wide">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>National Fellowship & Scholarship Gateway 2026-27</span>
+              <span>{t('landing.heroBadge')}</span>
             </div>
 
             <div className="space-y-3">
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
-                Empowering Tribal Scholars with Modern Digital Infrastructure
+                {t('landing.heroTitle')}
               </h1>
               <p className="text-base sm:text-lg font-normal text-slate-300 max-w-2xl leading-relaxed">
-                A unified, transparent portal for Scheduled Tribe students. From automated document verification to merit screening and direct-to-bank fellowship disbursements.
+                {t('landing.heroSubtitle')}
               </p>
             </div>
 
@@ -74,7 +76,7 @@ export const LandingPage: React.FC = () => {
                 href="#schemes"
                 className="flex items-center space-x-2 px-6 py-3 rounded-xl text-xs sm:text-sm font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-md shadow-emerald-900/30 active:scale-95 cursor-pointer"
               >
-                <span>Explore Schemes</span>
+                <span>{t('landing.exploreApply')}</span>
                 <ArrowRight className="w-4 h-4" />
               </a>
 
@@ -83,7 +85,7 @@ export const LandingPage: React.FC = () => {
                 className="flex items-center space-x-2 px-6 py-3 rounded-xl text-xs sm:text-sm font-semibold bg-white/10 hover:bg-white/15 text-white border border-white/15 transition-all active:scale-95 backdrop-blur-xs"
               >
                 <Zap className="w-4 h-4 text-emerald-400" />
-                <span>Check Eligibility</span>
+                <span>{t('landing.checkEligibility')}</span>
               </Link>
 
               <button
@@ -91,7 +93,7 @@ export const LandingPage: React.FC = () => {
                 className="flex items-center space-x-2 px-5 py-3 rounded-xl text-xs sm:text-sm font-semibold bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/80 transition-all cursor-pointer"
               >
                 <Play className="w-3.5 h-3.5 text-emerald-400 fill-current" />
-                <span>Demo Walkthrough</span>
+                <span>{t('landing.watchDemo')}</span>
               </button>
             </div>
 
@@ -194,10 +196,10 @@ export const LandingPage: React.FC = () => {
               National Directory
             </span>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">
-              Available Fellowship & Scholarship Schemes
+              {t('landing.schemesHeading')}
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-xl">
-              Explore national programs designed to support Scheduled Tribe scholars across higher education, research, and overseas studies.
+              {t('landing.schemesSubheading')}
             </p>
           </div>
 
@@ -206,7 +208,7 @@ export const LandingPage: React.FC = () => {
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search by scheme code, name or level..."
+              placeholder={t('common.search')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-3 py-2.5 text-xs rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-700 shadow-2xs"
@@ -217,10 +219,10 @@ export const LandingPage: React.FC = () => {
         {/* Category Filters */}
         <div className="flex items-center space-x-2 overflow-x-auto pb-2 text-xs">
           {[
-            { id: 'all', label: 'All Schemes' },
-            { id: 'fellowship', label: 'National Fellowship (NFST)' },
-            { id: 'overseas', label: 'Overseas Studies (NOS)' },
-            { id: 'scholarship', label: 'Top Class & Post-Matric' },
+            { id: 'all', label: t('landing.viewAllSchemes') },
+            { id: 'fellowship', label: 'NFST (Ph.D.)' },
+            { id: 'overseas', label: 'NOS (Abroad)' },
+            { id: 'scholarship', label: 'TCE & Post-Matric' },
           ].map((cat) => (
             <button
               key={cat.id}
@@ -255,7 +257,7 @@ export const LandingPage: React.FC = () => {
 
                 <div>
                   <h3 className="text-base font-bold text-slate-900 leading-snug">
-                    {scheme.name}
+                    {language !== 'en' && scheme.hindiName ? scheme.hindiName : scheme.name}
                   </h3>
                   <p className="text-xs text-slate-500 mt-1 line-clamp-2">
                     {scheme.description}
@@ -283,13 +285,13 @@ export const LandingPage: React.FC = () => {
                   to={`/applicant/application/new?scheme=${scheme.code}`}
                   className="flex-1 py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs text-center transition-colors shadow-2xs"
                 >
-                  Apply Online
+                  {t('common.applyNow')}
                 </Link>
                 <Link
                   to="/applicant/eligibility"
                   className="py-2 px-3 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold text-xs text-center transition-colors"
                 >
-                  Check Eligibility
+                  {t('common.checkEligibility')}
                 </Link>
               </div>
             </div>

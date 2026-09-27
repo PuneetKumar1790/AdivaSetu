@@ -2,8 +2,11 @@ import React from 'react';
 import { ShieldCheck, ExternalLink, Activity, HeartHandshake } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { AdivaSetuLogo } from '../common/AdivaSetuLogo';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const GovFooter: React.FC = () => {
+  const { t } = useLanguage();
+
   return (
     <footer className="bg-slate-950 text-slate-400 text-xs border-t border-slate-800 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
@@ -15,7 +18,7 @@ export const GovFooter: React.FC = () => {
             </Link>
 
             <p className="text-slate-400 text-xs leading-relaxed max-w-sm">
-              Empowering Scheduled Tribe researchers and scholars across 20 priority states through transparent AI-assisted document scrutiny, merit ranking, and direct benefit disbursement.
+              {t('footer.disclaimer')}
             </p>
 
             <div className="flex items-center space-x-2 text-[11px] text-emerald-400 bg-emerald-950/40 border border-emerald-900/60 px-3 py-1.5 rounded-lg w-fit">

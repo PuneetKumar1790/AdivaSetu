@@ -7,6 +7,8 @@ import {
   SUPPORTED_LANGUAGES,
   getLanguageMeta,
 } from '../../services/aiAssistantService';
+import { useLanguage } from '../../context/LanguageContext';
+import { AppLanguage } from '../../i18n/translations';
 import {
   Sparkles,
   X,
@@ -270,6 +272,7 @@ const INITIAL_MESSAGES: Record<AssistantLanguage, ChatMessage[]> = {
 
 export const AdivaSetuSaathi: React.FC = () => {
   const navigate = useNavigate();
+  const { language: appLanguage, setLanguage: setAppLanguage } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [language, setLanguage] = useState<AssistantLanguage>('auto');
@@ -293,12 +296,26 @@ export const AdivaSetuSaathi: React.FC = () => {
     }
   }, [messages, isOpen, isLoading]);
 
+  // Synchronize chatbot when global app language changes
+  useEffect(() => {
+    if (appLanguage && appLanguage in INITIAL_MESSAGES) {
+      setLanguage(appLanguage as AssistantLanguage);
+      if (messages.length <= 1) {
+        setMessages(INITIAL_MESSAGES[appLanguage as AssistantLanguage]);
+      }
+    }
+  }, [appLanguage]);
+
   // Handle language switch
   const handleLanguageChange = (newLang: AssistantLanguage) => {
     setLanguage(newLang);
     // If only welcome message, replace with new language welcome
     if (messages.length <= 1) {
       setMessages(INITIAL_MESSAGES[newLang]);
+    }
+    // Also update global application language if supported
+    if (newLang !== 'auto' && newLang !== 'hinglish') {
+      setAppLanguage(newLang as AppLanguage);
     }
   };
 

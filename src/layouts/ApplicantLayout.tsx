@@ -8,6 +8,7 @@ import { DemoScenarioControls } from '../components/demo/DemoScenarioControls';
 import { AdivaSetuSaathi } from '../components/chat/AdivaSetuSaathi';
 import { useAuth } from '../context/AuthContext';
 import { useApplication } from '../context/ApplicationContext';
+import { useLanguage } from '../context/LanguageContext';
 import {
   LayoutDashboard,
   Compass,
@@ -29,6 +30,7 @@ import {
 export const ApplicantLayout: React.FC = () => {
   const { user, logout } = useAuth();
   const { notifications } = useApplication();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const [isRecorderOpen, setIsRecorderOpen] = useState(false);
@@ -38,15 +40,15 @@ export const ApplicantLayout: React.FC = () => {
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const navLinks = [
-    { to: '/applicant/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/applicant/schemes', label: 'Browse Schemes', icon: Compass },
-    { to: '/applicant/eligibility', label: 'AI Eligibility Assistant', icon: Sparkles, highlight: true },
-    { to: '/applicant/applications', label: 'My Applications', icon: FileCheck2 },
-    { to: '/applicant/documents', label: 'Documents Vault', icon: FolderLock },
-    { to: '/applicant/deficiencies', label: 'Deficiencies', icon: AlertTriangle, badge: '1 Action' },
-    { to: '/applicant/fellowship', label: 'Award / Fellowship', icon: Award },
-    { to: '/applicant/notifications', label: 'Notifications', icon: Bell, badgeCount: unreadCount },
-    { to: '/applicant/profile', label: 'Scholar Profile', icon: User },
+    { to: '/applicant/dashboard', label: t('nav.dashboard'), icon: LayoutDashboard },
+    { to: '/applicant/schemes', label: t('nav.browseSchemes'), icon: Compass },
+    { to: '/applicant/eligibility', label: t('nav.aiEligibility'), icon: Sparkles, highlight: true },
+    { to: '/applicant/applications', label: t('nav.myApplications'), icon: FileCheck2 },
+    { to: '/applicant/documents', label: t('nav.documentsVault'), icon: FolderLock },
+    { to: '/applicant/deficiencies', label: t('nav.deficiencies'), icon: AlertTriangle, badge: '1 Action' },
+    { to: '/applicant/fellowship', label: t('nav.awardFellowship'), icon: Award },
+    { to: '/applicant/notifications', label: t('nav.notifications'), icon: Bell, badgeCount: unreadCount },
+    { to: '/applicant/profile', label: t('nav.scholarProfile'), icon: User },
   ];
 
   return (

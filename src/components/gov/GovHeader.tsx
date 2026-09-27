@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { AdivaSetuLogo } from '../common/AdivaSetuLogo';
 import {
   Compass,
@@ -23,6 +24,7 @@ interface GovHeaderProps {
 
 export const GovHeader: React.FC<GovHeaderProps> = ({ onOpenRecorder, onOpenDemoControls }) => {
   const { user, isAuthenticated, role, logout } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
@@ -49,7 +51,7 @@ export const GovHeader: React.FC<GovHeaderProps> = ({ onOpenRecorder, onOpenDemo
                     : 'hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
-                Schemes
+                {t('nav.schemes')}
               </Link>
               <Link
                 to="/applicant/eligibility"
@@ -59,7 +61,7 @@ export const GovHeader: React.FC<GovHeaderProps> = ({ onOpenRecorder, onOpenDemo
                     : 'hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
-                Eligibility Engine
+                {t('nav.eligibilityEngine')}
               </Link>
               <Link
                 to="/applicant/applications"
@@ -69,7 +71,7 @@ export const GovHeader: React.FC<GovHeaderProps> = ({ onOpenRecorder, onOpenDemo
                     : 'hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
-                Applications
+                {t('nav.applications')}
               </Link>
               <Link
                 to="/applicant/fellowship"
@@ -79,7 +81,7 @@ export const GovHeader: React.FC<GovHeaderProps> = ({ onOpenRecorder, onOpenDemo
                     : 'hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
-                DBT & Sanctions
+                {t('nav.dbtSanctions')}
               </Link>
               {role === 'officer' && (
                 <Link
@@ -90,7 +92,7 @@ export const GovHeader: React.FC<GovHeaderProps> = ({ onOpenRecorder, onOpenDemo
                       : 'text-amber-800 hover:bg-amber-50'
                   }`}
                 >
-                  Officer Console
+                  {t('nav.officerConsole')}
                 </Link>
               )}
             </nav>
@@ -140,21 +142,21 @@ export const GovHeader: React.FC<GovHeaderProps> = ({ onOpenRecorder, onOpenDemo
                         className="block px-3.5 py-2 hover:bg-slate-50 text-slate-700 font-medium"
                         onClick={() => setProfileDropdownOpen(false)}
                       >
-                        Dashboard
+                        {t('nav.dashboard')}
                       </Link>
                       <Link
                         to="/applicant/profile"
                         className="block px-3.5 py-2 hover:bg-slate-50 text-slate-700 font-medium"
                         onClick={() => setProfileDropdownOpen(false)}
                       >
-                        Profile Settings
+                        {t('nav.scholarProfile')}
                       </Link>
                       <Link
                         to="/applicant/notifications"
                         className="block px-3.5 py-2 hover:bg-slate-50 text-slate-700 font-medium"
                         onClick={() => setProfileDropdownOpen(false)}
                       >
-                        Notifications
+                        {t('nav.notifications')}
                       </Link>
                     </div>
 
@@ -164,10 +166,10 @@ export const GovHeader: React.FC<GovHeaderProps> = ({ onOpenRecorder, onOpenDemo
                           logout();
                           navigate('/login');
                         }}
-                        className="w-full text-left px-3.5 py-2 text-rose-600 hover:bg-rose-50 font-medium flex items-center space-x-1.5"
+                        className="w-full text-left px-3.5 py-2 text-rose-600 hover:bg-rose-50 font-medium flex items-center space-x-1.5 cursor-pointer"
                       >
                         <LogOut className="w-3.5 h-3.5" />
-                        <span>Sign Out</span>
+                        <span>{t('nav.logout')}</span>
                       </button>
                     </div>
                   </div>
@@ -179,13 +181,13 @@ export const GovHeader: React.FC<GovHeaderProps> = ({ onOpenRecorder, onOpenDemo
                   to="/login"
                   className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors"
                 >
-                  Sign In
+                  {t('nav.login')}
                 </Link>
                 <Link
                   to="/applicant/schemes"
                   className="px-4 py-2 rounded-xl text-xs font-bold bg-[#0F172A] hover:bg-slate-800 text-white transition-all shadow-xs"
                 >
-                  Apply Now
+                  {t('common.applyNow')}
                 </Link>
               </div>
             )}
