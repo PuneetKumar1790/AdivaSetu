@@ -1,6 +1,187 @@
 import { INITIAL_SCHEMES } from '../data/schemesData';
 
-export type AssistantLanguage = 'en' | 'hi' | 'hinglish';
+export type AssistantLanguage =
+  | 'auto'
+  | 'en'
+  | 'hi'
+  | 'hinglish'
+  | 'or'   // Odia
+  | 'bn'   // Bengali
+  | 'mr'   // Marathi
+  | 'te'   // Telugu
+  | 'ta'   // Tamil
+  | 'gu'   // Gujarati
+  | 'as'   // Assamese
+  | 'kn'   // Kannada
+  | 'ml'   // Malayalam
+  | 'sat'  // Santhali
+  | 'pa'   // Punjabi
+  | 'ur';  // Urdu
+
+export interface SupportedLanguage {
+  code: AssistantLanguage;
+  name: string;
+  englishName: string;
+  instruction: string;
+  placeholder: string;
+  thinkingText: string;
+}
+
+export const SUPPORTED_LANGUAGES: SupportedLanguage[] = [
+  {
+    code: 'auto',
+    name: '🌍 Any Language (Auto-Detect)',
+    englishName: 'Auto Detect',
+    instruction:
+      'Detect the language and script of the user question (whether Odia, Bengali, Marathi, Telugu, Tamil, Gujarati, Assamese, Kannada, Malayalam, Santhali, Punjabi, Urdu, Hindi, Hinglish, or English) and reply fluently in that exact same language and script.',
+    placeholder: 'Ask in ANY Indian language or dialect (Odia, Bengali, Hindi, Telugu, Santhali...)...',
+    thinkingText: 'Saathi is analyzing in your language...',
+  },
+  {
+    code: 'en',
+    name: 'English',
+    englishName: 'English',
+    instruction: 'Respond in clear, professional English with bullet points and reassuring guidance.',
+    placeholder: 'Ask about schemes, eligibility, or attach certificate...',
+    thinkingText: 'Saathi is analyzing guidelines...',
+  },
+  {
+    code: 'hi',
+    name: 'हिन्दी',
+    englishName: 'Hindi',
+    instruction:
+      'Respond in clear, natural Hindi (हिंदी भाषा, देवनागरी लिपि). Use polite and motivating tone with official MoTA terminology.',
+    placeholder: 'योजनाओं, छात्रवृत्ति या पात्रता के बारे में पूछें...',
+    thinkingText: 'साथी समीक्षा कर रहा है...',
+  },
+  {
+    code: 'hinglish',
+    name: 'Hinglish',
+    englishName: 'Hinglish',
+    instruction:
+      'Respond in conversational Hinglish (Hindi written in English alphabets, like WhatsApp chat). Be very clear and helpful.',
+    placeholder: 'Sawal poochhein ya document attach karein...',
+    thinkingText: 'Saathi check kar raha hai...',
+  },
+  {
+    code: 'or',
+    name: 'ଓଡ଼ିଆ',
+    englishName: 'Odia',
+    instruction:
+      'Respond in clear, natural, respectful Odia (ଓଡ଼ିଆ ଭାଷା, ଓଡ଼ିଆ ଲିପି). Explain MoTA fellowship rules clearly.',
+    placeholder: 'ଛାତ୍ରବୃତ୍ତି, ଯୋଗ୍ୟତା ବିଷୟରେ ପଚାରନ୍ତୁ କିମ୍ବା ପ୍ରମାଣପତ୍ର ଯୋଡ଼ନ୍ତୁ...',
+    thinkingText: 'ସାଥୀ ନିର୍ଦ୍ଦେଶାବଳୀ ଯାଞ୍ଚ କରୁଛି...',
+  },
+  {
+    code: 'bn',
+    name: 'বাংলা',
+    englishName: 'Bengali',
+    instruction:
+      'Respond in clear, natural, respectful Bengali (বাংলা ভাষা). Explain all fellowship rules clearly.',
+    placeholder: 'স্কলারশিপ, ফেলোশিপ বা যোগ্যতা সম্পর্কে জিজ্ঞাসা করুন...',
+    thinkingText: 'সাথী নির্দেশিকা পর্যালোচনা করছে...',
+  },
+  {
+    code: 'mr',
+    name: 'मराठी',
+    englishName: 'Marathi',
+    instruction:
+      'Respond in clear, natural, respectful Marathi (मराठी भाषा, देवनागरी लिपि). Explain all fellowship rules clearly.',
+    placeholder: 'योजना, पात्रता किंवा शिष्यवृत्तीबद्दल विचारा...',
+    thinkingText: 'साथी पडताळणी करत आहे...',
+  },
+  {
+    code: 'te',
+    name: 'తెలుగు',
+    englishName: 'Telugu',
+    instruction:
+      'Respond in clear, natural, respectful Telugu (తెలుగు భాష). Explain all fellowship rules clearly.',
+    placeholder: 'స్కాలర్‌షిప్‌లు, అర్హత వివరాలు లేదా ధృవీకరణ పత్రాల గురించి అడగండి...',
+    thinkingText: 'సాథి మార్గదర్శకాలను విశ్లేషిస్తోంది...',
+  },
+  {
+    code: 'ta',
+    name: 'தமிழ்',
+    englishName: 'Tamil',
+    instruction:
+      'Respond in clear, natural, respectful Tamil (தமிழ் மொழி). Explain all fellowship rules clearly.',
+    placeholder: 'கல்வி உதவித்தொகை, தகுதி அல்லது சான்றிதழ்கள் பற்றி கேளுங்கள்...',
+    thinkingText: 'சாதி வழிகாட்டுதல்களை ஆய்வு செய்கிறது...',
+  },
+  {
+    code: 'gu',
+    name: 'ગુજરાતી',
+    englishName: 'Gujarati',
+    instruction:
+      'Respond in clear, natural, respectful Gujarati (ગુજરાતી ભાષા). Explain all fellowship rules clearly.',
+    placeholder: 'યોજનાઓ, ફેલોશિપ અથવા દસ્તાવેજો વિશે પૂછો...',
+    thinkingText: 'સાથી સમીક્ષા કરી રહ્યો છે...',
+  },
+  {
+    code: 'as',
+    name: 'অসমীয়া',
+    englishName: 'Assamese',
+    instruction:
+      'Respond in clear, natural, respectful Assamese (অসমীয়া ভাষা). Explain all fellowship rules clearly.',
+    placeholder: 'ফেল’শ্বিপ, অৰ্হতা বা নথিপত্ৰ সম্পৰ্কে সোধক...',
+    thinkingText: 'সাথীয়ে পৰ্যালোচনা কৰি আছে...',
+  },
+  {
+    code: 'kn',
+    name: 'ಕನ್ನಡ',
+    englishName: 'Kannada',
+    instruction:
+      'Respond in clear, natural, respectful Kannada (ಕನ್ನಡ ಭಾಷೆ). Explain all fellowship rules clearly.',
+    placeholder: 'ವಿದ್ಯಾರ್ಥಿವೇತನ, ಅರ್ಹತೆ ಅಥವಾ ದಾಖಲೆಗಳ ಬಗ್ಗೆ ಕೇಳಿ...',
+    thinkingText: 'ಸಾಥಿ ನಿಯಮಗಳನ್ನು ಪರಿಶೀಲಿಸುತ್ತಿದೆ...',
+  },
+  {
+    code: 'ml',
+    name: 'മലയാളം',
+    englishName: 'Malayalam',
+    instruction:
+      'Respond in clear, natural, respectful Malayalam (മലയാളം). Explain all fellowship rules clearly.',
+    placeholder: 'സ്കോളർഷിപ്പ്, യോഗ്യത എന്നിവയെക്കുറിച്ച് ചോദിക്കുക...',
+    thinkingText: 'സാഥി പരിശോധിക്കുന്നു...',
+  },
+  {
+    code: 'sat',
+    name: 'ᱥᱟᱱᱛᱟᱲᱤ',
+    englishName: 'Santhali',
+    instruction:
+      'Respond in Santhali (ᱥᱟᱱᱛᱟᱲᱤ / Ol Chiki or clear Roman script). Be very encouraging to tribal scholars.',
+    placeholder: 'ᱥᱠᱚᱞᱟᱨᱥᱤᱯ, ᱡᱚᱜᱽᱭᱚᱛᱟ ᱵᱟᱵᱚᱛ ᱠᱩᱞᱤ ᱢᱮ...',
+    thinkingText: 'ᱥᱟᱛᱷᱤ ᱵᱤᱪᱟᱹᱨ ᱮᱫᱟᱭ...',
+  },
+  {
+    code: 'pa',
+    name: 'ਪੰਜਾਬੀ',
+    englishName: 'Punjabi',
+    instruction:
+      'Respond in clear, natural Punjabi (ਪੰਜਾਬੀ ਭਾਸ਼ਾ, ਗੁਰਮੁਖੀ ਲਿਪੀ). Explain all fellowship rules clearly.',
+    placeholder: 'ਸਕਾਲਰਸ਼ਿਪ, ਯੋਗਤਾ ਜਾਂ ਸਰਟੀਫਿਕੇਟ ਬਾਰੇ ਪੁੱਛੋ...',
+    thinkingText: 'ਸਾਥੀ ਸਮੀਖਿਆ ਕਰ ਰਿਹਾ ਹੈ...',
+  },
+  {
+    code: 'ur',
+    name: 'اردو',
+    englishName: 'Urdu',
+    instruction:
+      'Respond in clear, natural Urdu (اردو زبان). Explain all fellowship rules clearly.',
+    placeholder: 'اسکالرشپ، اہلیت یا دستاویزات کے بارے में پوچھیں...',
+    thinkingText: 'ساتھی جائزہ لے رہا ہے...',
+  },
+];
+
+export function getLanguageInstruction(language: AssistantLanguage): string {
+  const found = SUPPORTED_LANGUAGES.find((l) => l.code === language);
+  return found ? found.instruction : SUPPORTED_LANGUAGES[0].instruction;
+}
+
+export function getLanguageMeta(language: AssistantLanguage): SupportedLanguage {
+  const found = SUPPORTED_LANGUAGES.find((l) => l.code === language);
+  return found || SUPPORTED_LANGUAGES[0];
+}
 
 export interface ChatMessage {
   id: string;
@@ -63,10 +244,8 @@ COMMUNICATION GUIDELINES:
 - Always be warm, respectful, empowering, and helpful. Never speak down to scholars or make them feel less technical.
 - Break down complex government rules into clear, simple bullet points.
 - STRICT IDENTITY: NEVER mention, disclose, or state which underlying LLM, model, vendor, or commercial AI brand powers you (never mention Gemini, OpenAI, Claude, LLM, etc.). If asked who you are or what model you are, always state that you are "AdivaSetu Saathi" (अदिवा सेतु साथी), the official National Fellowship & Scholarship AI Guide.
-- If asked in Hindi, respond in authentic, fluent Hindi (Devanagari script).
-- If asked in Hinglish, respond in friendly everyday Hinglish (Roman script).
-- If asked in English, respond in clear, professional English.
-- When an attached document is analyzed, inspect the dates, income figures, names, and university rankings, and explain clearly whether it qualifies or needs updating.
+- MULTILINGUAL MANDATE: AdivaSetu Saathi serves diverse Scheduled Tribe (ST) students across all regions of India. You MUST support all Indian languages, including Hindi, Odia, Bengali, Marathi, Telugu, Tamil, Gujarati, Assamese, Kannada, Malayalam, Santhali, Punjabi, Urdu, Hinglish, and English.
+- DYNAMIC ADAPTATION: If the user selects a language, respond fully in that language. If the user writes their question in ANY other Indian or regional language or script (such as Bengali, Odia, Marathi, Telugu, Tamil, Gujarati, Santhali, Punjabi, Urdu, Assamese, Malayalam, Kannada, etc., or Roman transliteration), ALWAYS detect it and respond with high fluency in that exact same language!
 `;
 
 export const aiAssistantService = {
@@ -84,20 +263,11 @@ export const aiAssistantService = {
   async askAssistant(
     userText: string,
     history: ChatMessage[],
-    language: AssistantLanguage = 'en',
+    language: AssistantLanguage = 'auto',
     attachment?: { name: string; type: string; base64?: string }
   ): Promise<{ text: string; suggestedActions?: ChatMessage['suggestedActions'] }> {
     const apiKey = this.getApiKey();
-
-    // Prepare language instruction
-    let langInstruction = 'Respond in English.';
-    if (language === 'hi') {
-      langInstruction =
-        'Respond in clear, natural Hindi (हिंदी भाषा, देवनागरी लिपि). Use polite and motivating tone.';
-    } else if (language === 'hinglish') {
-      langInstruction =
-        'Respond in conversational Hinglish (Hindi written in English alphabets, like WhatsApp chat). Be very clear and helpful.';
-    }
+    const langInstruction = getLanguageInstruction(language);
 
     // 1. Attempt Direct Gemini 2.5 Flash if API Key is configured in environment
     if (apiKey && apiKey.trim().length > 10) {

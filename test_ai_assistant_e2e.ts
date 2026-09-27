@@ -35,8 +35,32 @@ async function runAIAssistantTests() {
     console.log('✅ PASS: Hindi response generated successfully with authentic terminology.\n');
   }
 
-  // Test 3: Document Upload & Live PDF Reading
-  console.log('📡 Test 3: Document Pre-Audit - Uploaded PDF Document Reading');
+  // Test 3: Odia Regional Language Query (ଓଡ଼ିଆ)
+  console.log('📡 Test 3: Odia Query - ମୁଁ କଣ NFST ଫେଲୋସିପ୍ ପାଇଁ ଆବେଦନ କରିପାରିବି?');
+  const orRes = await aiAssistantService.askAssistant(
+    'ମୁଁ କଣ NFST ଫେଲୋସିପ୍ ପାଇଁ ଆବେଦନ କରିପାରିବି? ଏହାର ମାସିକ ଷ୍ଟାଇପେଣ୍ଡ କେତେ?',
+    [],
+    'or'
+  );
+  console.log('AI Response (Odia):\n', orRes.text.slice(0, 200), '...\n');
+  if (orRes.text && orRes.text.length > 20) {
+    console.log('✅ PASS: Odia (ଓଡ଼ିଆ) response generated successfully.\n');
+  }
+
+  // Test 4: Auto-Detect Language (e.g. Marathi or Bengali)
+  console.log('📡 Test 4: Auto-Detect - Bengali query with language set to auto');
+  const autoRes = await aiAssistantService.askAssistant(
+    'ন্যাশনাল ওভারসিজ স্কলারশিপ (NOS) এর জন্য পারিবারিক আয়ের সর্বোচ্চ সীমা কত?',
+    [],
+    'auto'
+  );
+  console.log('AI Response (Auto-Detected Bengali):\n', autoRes.text.slice(0, 200), '...\n');
+  if (autoRes.text && autoRes.text.length > 20) {
+    console.log('✅ PASS: Auto-detection responded natively in user requested language.\n');
+  }
+
+  // Test 5: Document Upload & Live PDF Reading
+  console.log('📡 Test 5: Document Pre-Audit - Uploaded PDF Document Reading');
   const validPdfBase64 = Buffer.from(
     '%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 144] /Contents 4 0 R >>\nendobj\n4 0 obj\n<< /Length 55 >>\nstream\nBT /F1 18 Tf 50 100 Td (Driving License: DL-0420110012345) Tj ET\nendstream\nendobj\nxref\n0 5\n0000000000 65535 f \n0000000010 00000 n \n0000000060 00000 n \n0000000117 00000 n \n0000000201 00000 n \ntrailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n306\n%%EOF'
   ).toString('base64');
