@@ -67,7 +67,18 @@ AdivaSetu serves as a unified umbrella for all key schemes administered under hi
 
 ## 🚀 Key Features & How It Works
 
-### 1. Interactive Scheme Explorer & Eligibility Guide
+### 1. AdivaSetu Saathi (अदिवा सेतु साथी) — Multilingual AI Fellowship Assistant (Gemini 2.5 Flash)
+* **How It Works**: A responsive, floating conversational assistant accessible anywhere on the platform that answers applicant questions, demystifies complex government guidelines, and performs instant pre-audits on uploaded documents.
+* **Powered by Google Gemini 2.5 Flash**: Connected live with dual-mode architecture (grounded generative AI when online, plus a deterministic domain RAG engine fallback so it never fails).
+* **Multilingual Inclusivity**:
+  * 🇬🇧 **English**: Clear statutory explanations, criteria breakdowns, and scheme comparisons.
+  * 🇮🇳 **हिंदी (Hindi)**: Authentic, native Devanagari responses (e.g. *"क्या मैं Ph.D fellowship ले सकता हूँ?"*).
+  * 💬 **Hinglish**: Friendly everyday romanized Hindi designed for student accessibility.
+* **Document Attachment & Pre-Audit**: Scholars can attach certificates (Income Certificate, University Offer Letter, Caste Certificate, Passport) directly in the chat to receive an immediate audit report on financial year validity, income ceiling compliance, and university QS ranking fit.
+
+---
+
+### 2. Interactive Scheme Explorer & Eligibility Guide
 * **How It Works**: Before starting an application, students can use the built-in Eligibility Guide to enter basic details—such as education level, intended study destination (India vs Abroad), and academic marks.
 * **Instant Clarification**: The system checks these parameters against statutory criteria and indicates which schemes match the scholar's profile, explaining criteria clearly so applicants never feel lost.
 
@@ -206,16 +217,19 @@ AdivaSetu includes comprehensive test suites covering all components end-to-end:
 # 1. Run full Scheme Rules, Dynamic Eligibility & Document Intelligence tests (40/40 checks)
 npm run test:features
 
-# 2. Run Backend API integration test suite (17/17 endpoints)
+# 2. Run live Gemini 2.5 Flash multilingual AI assistant test
+npm run test:assistant
+
+# 3. Run Backend API integration test suite (17/17 endpoints)
 npm run test:backend
 
-# 3. Run real PDF upload & Supabase cloud storage verification
+# 4. Run real PDF upload & Supabase cloud storage verification
 npm run test:upload
 
-# 4. Run all test suites in sequence
+# 5. Run all test suites in sequence
 npm run test:all
 
-# 5. Verify full TypeScript compilation and production build
+# 6. Verify full TypeScript compilation and production build
 npm run build
 ```
 

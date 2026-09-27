@@ -5,6 +5,7 @@ import { GovHeader } from '../components/gov/GovHeader';
 import { GovFooter } from '../components/gov/GovFooter';
 import { DemoVideoRecorderModal } from '../components/recorder/DemoVideoRecorderModal';
 import { DemoScenarioControls } from '../components/demo/DemoScenarioControls';
+import { AdivaSetuSaathi } from '../components/chat/AdivaSetuSaathi';
 import { useAuth } from '../context/AuthContext';
 import { useApplication } from '../context/ApplicationContext';
 import {
@@ -169,7 +170,8 @@ export const ApplicantLayout: React.FC = () => {
 
       <GovFooter />
 
-      {/* Global Modals */}
+      {/* Global Modals & AI Assistant */}
+      <AdivaSetuSaathi />
       <DemoVideoRecorderModal isOpen={isRecorderOpen} onClose={() => setIsRecorderOpen(false)} />
       <DemoScenarioControls isOpen={isDemoControlsOpen} onClose={() => setIsDemoControlsOpen(false)} />
     </div>
