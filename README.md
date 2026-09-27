@@ -67,9 +67,9 @@ AdivaSetu serves as a unified umbrella for all key schemes administered under hi
 
 ## 🚀 Key Features & How It Works
 
-### 1. AdivaSetu Saathi (अदिवा सेतु साथी) — Multilingual AI Fellowship Assistant (Gemini 2.5 Flash)
+### 1. AdivaSetu Saathi (अदिवा सेतु साथी) — Multilingual AI Fellowship Assistant
 * **How It Works**: A responsive, floating conversational assistant accessible anywhere on the platform that answers applicant questions, demystifies complex government guidelines, and performs instant pre-audits on uploaded documents.
-* **Powered by Google Gemini 2.5 Flash**: Connected live with dual-mode architecture (grounded generative AI when online, plus a deterministic domain RAG engine fallback so it never fails).
+* **Intelligent Hybrid Architecture**: Built with dual-mode architecture (grounded generative AI when online, plus a deterministic domain RAG engine fallback so it never fails).
 * **Multilingual Inclusivity**:
   * 🇬🇧 **English**: Clear statutory explanations, criteria breakdowns, and scheme comparisons.
   * 🇮🇳 **हिंदी (Hindi)**: Authentic, native Devanagari responses (e.g. *"क्या मैं Ph.D fellowship ले सकता हूँ?"*).
@@ -217,7 +217,7 @@ AdivaSetu includes comprehensive test suites covering all components end-to-end:
 # 1. Run full Scheme Rules, Dynamic Eligibility & Document Intelligence tests (40/40 checks)
 npm run test:features
 
-# 2. Run live Gemini 2.5 Flash multilingual AI assistant test
+# 2. Run multilingual AI assistant test
 npm run test:assistant
 
 # 3. Run Backend API integration test suite (17/17 endpoints)

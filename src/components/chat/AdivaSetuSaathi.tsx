@@ -28,7 +28,7 @@ const INITIAL_MESSAGES: Record<AssistantLanguage, ChatMessage[]> = {
       id: 'welcome-en',
       sender: 'assistant',
       text:
-        `Hello! I am **AdivaSetu Saathi (अदिवा सेतु साथी)**, your AI Fellowship Assistant powered by **Google Gemini 2.5 Flash**.\n\n` +
+        `Hello! I am **AdivaSetu Saathi (अदिवा सेतु साथी)**, your official AI Fellowship and Scholarship Assistant.\n\n` +
         `I can help you check **NFST (Ph.D.) & NOS (Overseas)** rules, audit uploaded certificates, or check your DBT stipend schedules. How can I help you today?`,
       timestamp: 'Just now',
       suggestedActions: [
@@ -43,7 +43,7 @@ const INITIAL_MESSAGES: Record<AssistantLanguage, ChatMessage[]> = {
       id: 'welcome-hi',
       sender: 'assistant',
       text:
-        `नमस्ते! मैं **अदिवा सेतु साथी (AdivaSetu Saathi)** हूँ, आपका डिजिटल छात्रवृत्ति और शोध अध्येतावृत्ति सहायक (संचालित **Google Gemini 2.5 Flash**)।\n\n` +
+        `नमस्ते! मैं **अदिवा सेतु साथी (AdivaSetu Saathi)** हूँ, आपका डिजिटल छात्रवृत्ति और शोध अध्येतावृत्ति सहायक।\n\n` +
         `मैं आपकी **NFST (Ph.D.) और NOS (विदेशी छात्रवृत्ति)** के नियम समझने, अपने प्रमाण पत्रों की वैधता परखने, और DBT छात्रवृत्ति की स्थिति जानने में सहायता कर सकता हूँ।`,
       timestamp: 'अभी',
       suggestedActions: [
@@ -58,7 +58,7 @@ const INITIAL_MESSAGES: Record<AssistantLanguage, ChatMessage[]> = {
       id: 'welcome-hinglish',
       sender: 'assistant',
       text:
-        `Namaste! Main hoon **AdivaSetu Saathi**, aapka AI fellowship guide powered by **Google Gemini 2.5 Flash**.\n\n` +
+        `Namaste! Main hoon **AdivaSetu Saathi**, aapka official AI fellowship guide.\n\n` +
         `Aap mujhse **NFST (Ph.D) & NOS (Abroad)** ke eligibility rules pooch sakte hain, ya apna income/caste certificate upload karke verify karwa sakte hain.`,
       timestamp: 'Just now',
       suggestedActions: [
@@ -213,8 +213,9 @@ export const AdivaSetuSaathi: React.FC = () => {
               <div>
                 <div className="flex items-center space-x-2">
                   <h3 className="text-sm font-black tracking-wide">AdivaSetu Saathi</h3>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-400/40">
-                    Gemini 2.5 Flash
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-400/40 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Official MoTA AI
                   </span>
                 </div>
                 <p className="text-[11px] text-emerald-200/90 font-medium">
@@ -380,7 +381,7 @@ export const AdivaSetuSaathi: React.FC = () => {
                 <div className="w-2 h-2 rounded-full bg-emerald-600 animate-bounce [animation-delay:0.2s]"></div>
                 <div className="w-2 h-2 rounded-full bg-emerald-600 animate-bounce [animation-delay:0.4s]"></div>
                 <span className="text-[11px] font-medium text-emerald-800 font-sans">
-                  {language === 'hi' ? 'साथी विचार कर रहा है...' : 'Saathi is analyzing with Gemini 2.5 Flash...'}
+                  {language === 'hi' ? 'साथी समीक्षा कर रहा है...' : 'Saathi is analyzing guidelines...'}
                 </span>
               </div>
             )}
