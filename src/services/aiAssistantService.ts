@@ -99,67 +99,100 @@ export const aiAssistantService = {
         'Respond in conversational Hinglish (Hindi written in English alphabets, like WhatsApp chat). Be very clear and helpful.';
     }
 
-    // Attempt Gemini 2.5 Flash REST API call
-    try {
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    // 1. Attempt Direct Gemini 2.5 Flash if API Key is configured in environment
+    if (apiKey && apiKey.trim().length > 10) {
+      try {
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey.trim()}`;
 
-      // Build system instruction part
-      const parts: any[] = [
-        {
-          text: `${MOTA_KNOWLEDGE_BASE}\n\nCURRENT LANGUAGE INSTRUCTION: ${langInstruction}\n\nUSER QUESTION: ${userText}`,
-        },
-      ];
-
-      // Add document attachment if provided
-      if (attachment?.base64) {
-        const cleanBase64 = attachment.base64.replace(/^data:[^;]+;base64,/, '');
-        parts.push({
-          inlineData: {
-            mimeType: attachment.type || 'application/pdf',
-            data: cleanBase64,
+        // Build system instruction part
+        const parts: any[] = [
+          {
+            text: `${MOTA_KNOWLEDGE_BASE}\n\nCURRENT LANGUAGE INSTRUCTION: ${langInstruction}\n\nUSER QUESTION: ${userText}`,
           },
+        ];
+
+        // Add document attachment if provided
+        if (attachment?.base64) {
+          const cleanBase64 = attachment.base64.replace(/^data:[^;]+;base64,/, '');
+          parts.push({
+            inlineData: {
+              mimeType: attachment.type || 'application/pdf',
+              data: cleanBase64,
+            },
+          });
+          parts.push({
+            text: `[DOCUMENT ATTACHMENT ANALYZED: "${attachment.name}". Carefully inspect the document text, dates, issuing authority, income, course, or university details and provide a specific audit assessment.]`,
+          });
+        }
+
+        // Build conversation context from previous turns
+        const previousTurns = history.slice(-4).map((msg) => ({
+          role: msg.sender === 'user' ? 'user' : 'model',
+          parts: [{ text: msg.text }],
+        }));
+
+        const contents = [...previousTurns, { role: 'user', parts }];
+
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents,
+            generationConfig: {
+              temperature: 0.4,
+              maxOutputTokens: 1024,
+              topP: 0.9,
+            },
+          }),
         });
-        parts.push({
-          text: `[DOCUMENT ATTACHMENT ANALYZED: "${attachment.name}". Carefully inspect the document text, dates, issuing authority, income, course, or university details and provide a specific audit assessment.]`,
-        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const candidateText =
+            data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (candidateText && candidateText.trim()) {
+            return {
+              text: candidateText.trim(),
+              suggestedActions: this.generateSuggestedActions(userText, language),
+            };
+          }
+        }
+      } catch (err) {
+        console.warn('Direct Gemini API call failed, trying backend proxy:', err);
       }
+    }
 
-      // Build conversation context from previous turns
-      const previousTurns = history.slice(-4).map((msg) => ({
-        role: msg.sender === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.text }],
-      }));
+    // 2. Attempt Backend Proxy (/api/assistant/chat)
+    try {
+      const baseUrl = (import.meta as any).env?.VITE_API_BASE_URL || '';
+      const backendUrl = baseUrl.endsWith('/')
+        ? `${baseUrl}api/assistant/chat`
+        : baseUrl
+        ? `${baseUrl}/api/assistant/chat`
+        : '/api/assistant/chat';
 
-      const contents = [...previousTurns, { role: 'user', parts }];
-
-      const response = await fetch(endpoint, {
+      const proxyRes = await fetch(backendUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents,
-          generationConfig: {
-            temperature: 0.4,
-            maxOutputTokens: 1024,
-            topP: 0.9,
-          },
+          userText,
+          history,
+          language,
+          attachment,
         }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        const candidateText =
-          data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (candidateText && candidateText.trim()) {
+      if (proxyRes.ok) {
+        const data = await proxyRes.json();
+        if (data.text) {
           return {
-            text: candidateText.trim(),
+            text: data.text,
             suggestedActions: this.generateSuggestedActions(userText, language),
           };
         }
-      } else {
-        console.warn('Gemini API responded with status:', response.status);
       }
-    } catch (err) {
-      console.warn('Gemini API fetch error, falling back to Domain RAG:', err);
+    } catch {
+      // Backend proxy unavailable, proceed to Domain RAG Fallback
     }
 
     // Resilient Domain Knowledge Fallback (Guaranteed to always work)
