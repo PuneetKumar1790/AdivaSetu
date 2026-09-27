@@ -96,18 +96,29 @@ router.post('/chat', async (req: Request, res: Response) => {
 
     const contents = [...previousTurns, { role: 'user', parts }];
 
-    const geminiRes = await fetch(endpoint, {
+    const requestBody = JSON.stringify({
+      contents,
+      generationConfig: {
+        temperature: 0.4,
+        maxOutputTokens: 1024,
+        topP: 0.9,
+      },
+    });
+
+    let geminiRes = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents,
-        generationConfig: {
-          temperature: 0.4,
-          maxOutputTokens: 1024,
-          topP: 0.9,
-        },
-      }),
+      body: requestBody,
     });
+
+    if (geminiRes.status === 503 || geminiRes.status === 429) {
+      await new Promise((r) => setTimeout(r, 1000));
+      geminiRes = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: requestBody,
+      });
+    }
 
     if (geminiRes.ok) {
       const data = await geminiRes.json();

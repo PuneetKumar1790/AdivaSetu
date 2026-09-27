@@ -133,18 +133,31 @@ export const aiAssistantService = {
 
         const contents = [...previousTurns, { role: 'user', parts }];
 
-        const response = await fetch(endpoint, {
+        const requestBody = JSON.stringify({
+          contents,
+          generationConfig: {
+            temperature: 0.4,
+            maxOutputTokens: 1024,
+            topP: 0.9,
+          },
+        });
+
+        let response = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents,
-            generationConfig: {
-              temperature: 0.4,
-              maxOutputTokens: 1024,
-              topP: 0.9,
-            },
-          }),
+          body: requestBody,
         });
+
+        // Auto-retry on momentary 503 Service Unavailable or 429 Rate Limit
+        if (response.status === 503 || response.status === 429) {
+          console.warn(`Gemini returned ${response.status}, retrying in 1s...`);
+          await new Promise((r) => setTimeout(r, 1000));
+          response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: requestBody,
+          });
+        }
 
         if (response.ok) {
           const data = await response.json();
