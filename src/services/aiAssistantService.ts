@@ -70,9 +70,12 @@ COMMUNICATION GUIDELINES:
 
 export const aiAssistantService = {
   getApiKey(): string {
+    const env = (import.meta as any).env || {};
+    const globalProcess = typeof globalThis !== 'undefined' ? (globalThis as any).process : undefined;
     return (
-      (import.meta as any).env?.VITE_GEMINI_API_KEY ||
-      (typeof process !== 'undefined' ? process.env?.GEMINI_API_KEY || (process.env as any)?.VITE_GEMINI_API_KEY : '') ||
+      env.VITE_GEMINI_API_KEY ||
+      globalProcess?.env?.GEMINI_API_KEY ||
+      globalProcess?.env?.VITE_GEMINI_API_KEY ||
       ''
     );
   },
